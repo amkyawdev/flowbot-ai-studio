@@ -3,48 +3,36 @@ main = "src/index.ts"
 compatibility_date = "2024-11-01"
 compatibility_flags = ["nodejs_compat"]
 
-# Workers Logs
 [observability]
 enabled = true
 
 # ---------------------------------------------------------------------------
-# SCOPING note: this repo is deployed per-account with the resources below.
-# Run `./scripts/provision-cloudflare.sh` (after `npx wrangler login`) to create
-# D1 / KV / R2 / Queues, write real IDs into this file, apply migrations, and
-# set the Worker secrets (CREDENTIAL_MASTER_KEY, AUTH_SESSION_SECRET,
-# ZILLIZ_ENDPOINT, ZILLIZ_API_KEY). Zilliz config is kept as Worker SECRETS,
-# so it is intentionally NOT declared in [vars] to avoid a vars/secret conflict.
+# Production bindings (provisioned 2026-11-27 via Cloudflare Global API Key).
+# Zilliz config (ZILLIZ_ENDPOINT, ZILLIZ_API_KEY) and vault/session secrets
+# (CREDENTIAL_MASTER_KEY, AUTH_SESSION_SECRET) are set as Worker Secrets and
+# deliberately NOT declared here to avoid vars/secret name conflicts.
+# R2 is intentionally omitted: not enabled on this account (code 10042) and
+# currently unused by the Worker. Enable R2 in the dashboard and add a bucket
+# binding here when file storage is needed.
 # ---------------------------------------------------------------------------
 
-# ---------------------------------------------------------------------------
-# Bindings. IDs are wired automatically when using `wrangler d1 create` /
-# `wrangler kv namespace create` / `wrangler r2 bucket create`.
-# Replace placeholders below with real IDs from your account.
-# ---------------------------------------------------------------------------
-
-# D1 SQLite database (relational app data)
 [[d1_databases]]
 binding = "DB"
 database_name = "flowbot-db"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "4dd48ad3-215b-4feb-951d-dc53d046c7d9"
 migrations_dir = "migrations"
 
-# KV (session cache, webhook routing)
 [[kv_namespaces]]
 binding = "KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
-preview_id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "422251cd4b4a48ce83c8d0b7e75ddaba"
+preview_id = "422251cd4b4a48ce83c8d0b7e75ddaba"
 
-# R2 (file storage)
-[[r2_buckets]]
-binding = "R2"
-bucket_name = "flowbot-files"
-
-# Queue for background execution of long-running workflows
+# Background execution queue (producers)
 [[queues.producers]]
 binding = "EXECUTION_QUEUE"
 queue = "flowbot-executions"
 
+# Background execution queue (consumer)
 [[queues.consumers]]
 queue = "flowbot-executions"
 max_batch_size = 1
