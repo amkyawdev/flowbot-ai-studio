@@ -1025,3 +1025,52 @@ button:focus-visible, a:focus-visible, [role="option"]:focus-visible, input:focu
 .row-title { font-size: 15.5px; }
 .row-sub { font-size: 13px; }
 .field label { font-size: 13.5px; }
+
+/* ---------- register page: download app ---------- */
+.auth-download {
+  margin-top: 14px;
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  background: rgba(56, 189, 248, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.auth-download-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12.5px;
+  font-weight: 650;
+  color: var(--text-dim);
+}
+.auth-download-btn {
+  width: 100%;
+  min-height: 46px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, var(--brand-deep), var(--cyan));
+  border: none;
+  color: #05121c;
+  font-weight: 700;
+}
+.auth-download-btn:hover { filter: brightness(1.06); }
+.auth-download-url {
+  display: block;
+  text-align: center;
+  font-size: 11.5px;
+  color: var(--text-faint);
+  word-break: break-all;
+  line-height: 1.4;
+}
+.auth-download-url:hover { color: var(--brand-bright); }
+.auth-download-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: 12px;
+  font-size: 12px;
+  color: var(--text-faint);
+}
+.auth-download-link:hover { color: var(--brand-bright); }

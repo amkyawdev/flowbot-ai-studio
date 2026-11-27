@@ -1,6 +1,9 @@
 import { useState } from 'react';
-import { Workflow, Mail, Lock, Eye, EyeOff, ShieldCheck, UserRound } from 'lucide-react';
+import { Workflow, Mail, Lock, Eye, EyeOff, ShieldCheck, UserRound, Download, Smartphone } from 'lucide-react';
 import { useApp } from '@/store/app';
+
+const APP_DOWNLOAD_URL = (import.meta.env.VITE_APP_DOWNLOAD_URL as string | undefined)
+  || 'https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.1/app-debug.apk';
 
 export function LoginPage() {
   const { login, register, toast } = useApp();
@@ -77,10 +80,27 @@ export function LoginPage() {
             </button>
           </form>
 
+          {mode === 'register' && (
+            <div className="auth-download">
+              <div className="auth-download-head"><Smartphone size={15} /> Get the Android app</div>
+              <a className="btn auth-download-btn" href={APP_DOWNLOAD_URL} target="_blank" rel="noreferrer">
+                <Download size={17} /> Download App
+              </a>
+              <a className="auth-download-url" href={APP_DOWNLOAD_URL} target="_blank" rel="noreferrer" title={APP_DOWNLOAD_URL}>
+                {APP_DOWNLOAD_URL}
+              </a>
+            </div>
+          )}
+
           <div className="auth-foot">
             <ShieldCheck size={15} />
             Encrypted, scoped to your workspace
           </div>
+          {mode === 'login' && (
+            <a className="auth-download-link" href={APP_DOWNLOAD_URL} target="_blank" rel="noreferrer">
+              <Smartphone size={14} /> Download the Android app
+            </a>
+          )}
         </div>
       </div>
     </div>
