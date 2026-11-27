@@ -22,11 +22,11 @@ jobs:
           node-version: 22
           cache: npm
 
-      - name: Install + build web
+      - name: Install + build web + sync Capacitor
         run: |
           npm ci
           npm run build --workspace=flowbot-web
-          npx capacitor copy -- 2>/dev/null || true
+          cd web && npx cap sync android --inline
 
       - name: Set up JDK 21
         uses: actions/setup-java@v4
