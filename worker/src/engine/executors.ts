@@ -192,7 +192,7 @@ export const executors: Record<string, NodeExecutor> = {
     },
   },
 
-  ifNode: {
+  "if": {
     async execute(ctx, node) {
       const cfg = node.data;
       const left = await resolveString(ctx, node, cfg.left, ctx.output('value'));
@@ -222,7 +222,7 @@ export const executors: Record<string, NodeExecutor> = {
     },
   },
 
-  switchNode: {
+  switch: {
     async execute(ctx, node) {
       const cfg = node.data;
       const value = String(await resolveString(ctx, node, cfg.value, ctx.output('value')));
@@ -238,7 +238,7 @@ export const executors: Record<string, NodeExecutor> = {
     },
   },
 
-  setNode: {
+  set: {
     async execute(ctx, node) {
       const cfg = node.data;
       const mapping = parseJsonish(renderTemplate(String(cfg.mapping || '{}'), buildCtx(ctx, node)));
@@ -250,7 +250,7 @@ export const executors: Record<string, NodeExecutor> = {
     },
   },
 
-  delayNode: {
+  delay: {
     async execute(ctx, node) {
       const seconds = Math.max(0, Number(node.data.seconds || 0));
       if (seconds > 0) await new Promise((r) => setTimeout(r, seconds * 1000));

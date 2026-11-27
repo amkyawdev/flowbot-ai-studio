@@ -1,7 +1,23 @@
 import { describe, it, expect } from 'vitest';
 import type { FlowNode } from '@flowbot/shared';
+import { NODE_REGISTRY } from '@flowbot/shared';
 import type { NodeExecutionContext } from '../src/types';
-import { executors } from '../src/engine/executors';
+import { executors, getExecutor } from '../src/engine/executors';
+
+describe('executor registry coverage', () => {
+  it('has an executor for EVERY registered node type', () => {
+    const missing = NODE_REGISTRY
+      .map((n) => n.type)
+      .filter((type) => !getExecutor(type));
+    expect(missing).toEqual([]);
+  });
+
+  it('has no executor keys that are not real node types', () => {
+    const known = new Set(NODE_REGISTRY.map((n) => n.type));
+    const orphans = Object.keys(executors).filter((k) => !known.has(k));
+    expect(orphans).toEqual([]);
+  });
+});
 
 function makeCtx(overrides: Partial<Pick<NodeExecutionContext, 'input' | 'outputs'>> = {}): NodeExecutionContext {
   const inputs: Record<string, unknown> = { ...(overrides.input ?? {}) };
@@ -29,16 +45,16 @@ function node(type: string, data: Record<string, unknown>): FlowNode {
 describe('if node', () => {
   it('routes truthy to true output', async () => {
     const ctx = makeCtx({ outputs: {} });
-    const res = await executors.ifNode.execute(ctx, node('if', { left: 'hello', operator: 'truthy', right: '' }));
+    const res = await executors["if"].execute(ctx, node('if', { left: 'hello', operator: 'truthy', right: '' }));
     expect(res.outputs.true).toBe('hello');
     expect(res.outputs.false).toBeUndefined();
   });
 
   it('routes equality', async () => {
     const ctx = makeCtx();
-    const res = await executors.ifNode.execute(ctx, node('if', { left: '5', operator: 'eq', right: '5' }));
+    const res = await executors["if"].execute(ctx, node('if', { left: '5', operator: 'eq', right: '5' }));
     expect(res.outputs.true).toBe('5');
-    const res2 = await executors.ifNode.execute(ctx, node('if', { left: '5', operator: 'neq', right: '6' }));
+    const res2 = await executors["if"].execute(ctx, node('if', { left: '5', operator: 'neq', right: '6' }));
     expect(res2.outputs.true).toBe('5');
   });
 });
@@ -46,14 +62,14 @@ describe('if node', () => {
 describe('switch node', () => {
   it('matches a case', async () => {
     const ctx = makeCtx();
-    const res = await executors.switchNode.execute(ctx, node('switch', { value: 'b', cases: 'a,b,c' }));
+    const res = await executors.switch.execute(ctx, node('switch', { value: 'b', cases: 'a,b,c' }));
     expect(res.outputs.case1).toBe('b');
     expect(res.outputs.default).toBeUndefined();
   });
 
   it('falls to default', async () => {
     const ctx = makeCtx();
-    const res = await executors.switchNode.execute(ctx, node('switch', { value: 'z', cases: 'a,b,c' }));
+    const res = await executors.switch.execute(ctx, node('switch', { value: 'z', cases: 'a,b,c' }));
     expect(res.outputs.default).toBe('z');
   });
 });
@@ -62,7 +78,7 @@ describe('set node', () => {
   it('transforms payload via dotted paths', async () => {
     const ctx = makeCtx({ outputs: { set: { payload: { user: { name: 'A' } } } } });
     ctx.output = () => ({ user: { name: 'A' } });
-    const res = await executors.setNode.execute(ctx, node('set', { mapping: '{"user.name":"B","ok":true}' }));
+    const res = await executors.set.execute(ctx, node('set', { mapping: '{"user.name":"B","ok":true}' }));
     expect(res.outputs.payload).toEqual({ user: { name: 'B' }, ok: true });
   });
 });
