@@ -21,6 +21,7 @@
 - [Cloudflare ပြင်ဆင်ခြင်းနှင့် deploy](#cloudflare-ပြင်ဆင်ခြင်းနှင့်-deploy)
 - [D1 migrations](#d1-migrations)
 - [AI providers](#ai-providers)
+- [Email code authentication](#email-code-authentication)
 - [Cloudflare Workers AI](#cloudflare-workers-ai)
 - [Zilliz ပြင်ဆင်ခြင်း](#zilliz-ပြင်ဆင်ခြင်း)
 - [Chat နှင့် Public Chat](#chat-နှင့်-public-chat)
@@ -39,6 +40,7 @@
 
 - **AI Chat page** (`/chat`) — conversation history, search, rename, archive/delete, progressive text reveal, stop, regenerate, copy, system prompt နှင့် provider/model ရွေးချယ်မှု။
 - **Public Chat** (`/public-chat`) — signed-in user အားလုံးအတွက်၊ active-user avatar strip (left-to-right marquee), presence heartbeat နှင့် **24 နာရီအလိုက် အလိုအလျောက် message ဖျက်ခြင်း**။
+- **Email code authentication** — 6-digit email code ဖြင့် passwordless sign-in နှင့် registration verification (Resend)၊ D1 တွင် hash သိမ်း၊ 10 မိနစ် expiry နှင့် rate limit။
 - **Animation Script System** — data-only safe presets (message entrance, typing, panel/sidebar transition, presence marquee), preview/reset editor နှင့် `prefers-reduced-motion` အပြည့်အဝပံ့ပိုးမှု။ `eval`/`Function` မသုံးပါ။
 - **Modern loading screen** — logo ring, grid, orbs နှင့် progress bar။
 - **Workflow builder တိုးတက်မှုများ** — input JSON ပါသော run panel, live logs နှင့် stop, import/export JSON, workflow duplicate, undo/redo အပြည့်အစုံ, per-workflow autosave, searchable selector နှင့် validation။
@@ -154,6 +156,9 @@ npm run dev:web             # http://localhost:5173
 | `ZILLIZ_COLLECTION` | Worker env | optional collection (default `flowbot_chunks`) |
 | `TELEGRAM_API_URL` | Worker env | optional Telegram API base URL |
 | `VITE_API_BASE_URL` | web `.env` | dev/build တွင် backend URL |
+| `RESEND_API_KEY` / `EMAIL_FROM` | Worker secret | email OTP delivery (Resend) |
+| `AUTH_OTP_MODE` | Worker var | `optional` / `required` / `off` |
+| `OTP_DEV_ECHO` | dev only | local တွင် OTP ပြ (production မထည့်ရ) |
 
 ## Cloudflare ပြင်ဆင်ခြင်းနှင့် deploy
 
@@ -190,6 +195,7 @@ npm run dev:web             # http://localhost:5173
 | `CLOUDFLARE_ACCOUNT_ID` | secret/variable | Cloudflare account ID |
 | `CREDENTIAL_MASTER_KEY` / `AUTH_SESSION_SECRET` | secret | vault + session secret |
 | `ZILLIZ_ENDPOINT` / `ZILLIZ_API_KEY` | secret | optional vector store |
+| `RESEND_API_KEY` / `EMAIL_FROM` | secret | optional email OTP delivery |
 
 ## D1 migrations
 
@@ -198,6 +204,7 @@ npm run dev:web             # http://localhost:5173
 - `0001_init.sql` — users, sessions, workspaces, workflows, bots, credentials, integrations, agents, executions, logs, settings။
 - `0002_agent_endpoint.sql` — agent တစ်ခုချင်းအတွက် custom endpoint နှင့် credential link။
 - `0003_chat.sql` — `conversations`, `chat_messages`, `public_messages`, `public_presence`။
+- `0004_email_otp.sql` — `users.email_verified` နှင့် `email_otps` table။
 
 **Password နှင့် raw API secret များကို D1 တွင် မသိမ်းပါ။** Password များကို per-user salt ဖြင့် PBKDF2 hash လုပ်ပြီး API key များကို AES-256-GCM ciphertext အဖြစ် သိမ်းသည် (master key သည် Worker secret)။
 
@@ -219,6 +226,17 @@ Provider adapter များသည် `worker/src/integrations/providers.ts` �
 - **Cloudflare Workers AI**
 
 Credential များကို **Credentials** တွင် API key, optional Base URL, optional custom headers (encrypt လုပ်သိမ်း) နှင့် optional default model ဖြင့် ဖန်တီးနိုင်သည်။ Connection test များကို server-side တွင် run ပြီး secret များကို ဘယ်တော့မှ မပြန်ပေးပါ။ Node config တွင် Base URL ကို override လုပ်နိုင်ပြီး searchable selector ဖြင့် provider/model ရွေးနိုင်သည်။
+
+## Email code authentication
+
+FlowBot သည် registration verification နှင့် passwordless sign-in အတွက် 6-digit email code ကို ပံ့ပိုးသည်။
+
+1. [Resend](https://resend.com) account ဖွင့်ပြီး sending domain ကို verify လုပ်ပါ။
+2. Worker secrets `RESEND_API_KEY` နှင့် `EMAIL_FROM` (ဥပမာ `FlowBot <no-reply@yourdomain.com>`) သတ်မှတ်ပါ။
+3. လိုအပ်ပါက `AUTH_OTP_MODE` ကို `optional` (default — email-code sign-in ပြသည်), `required` (password ပြီးနောက် code မဖြစ်မနေ), သို့မဟုတ် `off` သတ်မှတ်ပါ။
+4. Deploy လုပ်ပါ။ Login page တွင် **Sign in with an email code** ပေါ်လာပြီး registration တွင် verification code ပို့ပါမည်။
+
+Code များကို D1 တွင် SHA-256 hash အဖြစ်သာ သိမ်းပြီး 10 မိနစ်အကြာ သက်တမ်းကုန်ကာ 5 ကြိမ်သာ ကြိုးစားနိုင်သည်။ Email တစ်ခုလျှင် တစ်မိနစ်လျှင် request တစ်ကြိမ် rate-limit ရှိသည်။ Local test အတွက်သာ `OTP_DEV_ECHO=true` ကို `worker/.dev.vars` တွင် ထည့်ပြီး code ကို UI မှာ ပြနိုင်သည် — production တွင် ဘယ်တော့မှ မထည့်ပါနှင့်။
 
 ## Cloudflare Workers AI
 
@@ -247,7 +265,7 @@ Worker က endpoint ကို normalize လုပ်ပြီး camelCase/snake
 ## Chat နှင့် Public Chat
 
 - **AI Chat** (`/chat`) သည် conversation နှင့် message များကို D1 တွင် သိမ်းသည်။ Reply များကို browser တွင် progressively reveal လုပ်ပြီး **Stop** က request/reveal ကို ရပ်စေကာ **Regenerate** က နောက်ဆုံး assistant reply ကို အစားထိုးသည်။ Provider, model, credential နှင့် system prompt ကို session အလိုက် သတ်မှတ်နိုင်သည်။
-- **Public Chat** (`/public-chat`) ကို signed-in user များ အသုံးပြုနိုင်သည်။ Message body အထက်တွင် active-user avatar များကို left-to-right marquee ဖြင့် ပြပြီး presence heartbeat နှင့် server-side rate limit ပါသည်။ Message များကို **24 နာရီပြည့်လျှင် အလိုအလျောက် ဖျက်သည်** (read/post တွင် lazy cleanup + hourly cron)။
+- **Public Chat** (`/public-chat`) ကို signed-in user များ အသုံးပြုနိုင်သည်။ Message body အထက်တွင် active-user avatar များကို left-to-right marquee ဖြင့် ပြပြီး presence heartbeat နှင့် server-side rate limit ပါသည်။ User တစ်ဦးချင်းစီအတွက် **SVG avatar 30 မျိုး (male 15 / female 15)** ကို 30px ဖြင့် ပြသည်။ Message များကို **24 နာရီပြည့်လျှင် အလိုအလျောက် ဖျက်သည်** (read/post တွင် lazy cleanup + hourly cron)။
 - စာမျက်နှာ နှစ်ခုလုံးသည် system ၏ `prefers-reduced-motion` ကို လိုက်နာပါသည်။
 
 ## Telegram ပြင်ဆင်ခြင်း
@@ -289,6 +307,7 @@ Optional signing secrets: `AMKYAW_KEYSTORE_BASE64`, `AMKYAW_KEYSTORE_PASSWORD`, 
 
 - Secret များကို AES-256-GCM ဖြင့် encrypt; master key သည် Worker secret။
 - PBKDF2 password hashing (per-user salt); D1 တွင် password မရှိပါ။
+- Email OTP code များကို SHA-256 hash ဖြင့်သာ သိမ်း၊ 10 မိနစ် expiry၊ 5 attempts နှင့် rate limit။
 - Telegram webhook များကို `secret_token` ဖြင့် စစ်ဆေး; bot token များ browser သို့ မပေး။
 - CORS allowlist, CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy` နှင့် HSTS။
 - Login throttling (KV-based) နှင့် timing-safe hash comparison။
@@ -326,10 +345,11 @@ Debug APK သည် Android debug key ဖြင့် sign လုပ်ထား
 ```
 shared/          Node definition, graph validation, template helper
 worker/          Cloudflare Worker (Hono), D1/KV/Queues/Workers AI, execution engine
-  migrations/    0001_init.sql, 0002_agent_endpoint.sql, 0003_chat.sql
+  migrations/    0001_init.sql, 0002_agent_endpoint.sql, 0003_chat.sql, 0004_email_otp.sql
   src/routes/    auth, workflows, executions, bots, credentials, integrations, agents, settings, chat
   src/engine/    runner, executors, vault
-  src/integrations/ providers, zilliz, telegram, mcp, http
+  src/integrations/ providers, zilliz, telegram, mcp, http, email
+  src/otp.ts     email OTP generation/hash helper
 web/             React + Vite PWA (Capacitor Android in web/android)
   src/pages/     Dashboard, Workflows, WorkflowEditor, Chat, Bots, Integrations, Agents, Credentials, Executions, Settings
   src/editor/    NodeCard, NodeLibrary, NodeConfigSheet

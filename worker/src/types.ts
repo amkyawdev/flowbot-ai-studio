@@ -22,6 +22,14 @@ export interface Env {
   ZILLIZ_TOKEN?: string;
   ZILLIZ_COLLECTION?: string;
   TELEGRAM_API_URL?: string;
+  /** Resend email provider (optional; enables email-code auth). */
+  RESEND_API_KEY?: string;
+  EMAIL_FROM?: string;
+  EMAIL_REPLY_TO?: string;
+  /** 'optional' (default) | 'required' | 'off' */
+  AUTH_OTP_MODE?: string;
+  /** Local/dev only: echo the OTP in the API response. Never enable in production. */
+  OTP_DEV_ECHO?: string;
 }
 
 export interface QueueMessage {

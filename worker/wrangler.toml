@@ -6,6 +6,10 @@ compatibility_flags = ["nodejs_compat"]
 [observability]
 enabled = true
 
+[vars]
+# optional: 'optional' (email-code sign-in available) | 'required' | 'off'
+AUTH_OTP_MODE = "optional"
+
 # Hourly cleanup of public chat history older than 24 hours.
 [triggers]
 crons = ["17 * * * *"]

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64" role="img" aria-label="female avatar 28">
+  <defs><clipPath id="c27"><circle cx="32" cy="32" r="32"/></clipPath></defs>
+  <g clip-path="url(#c27)">
+    <rect width="64" height="64" fill="#172554"/>
+    <path d="M14 33c0-14 8-22 18-22s18 8 18 22v14c-3-2-5-7-6-13-2 4-6 6-12 6s-10-2-12-6c-1 6-3 11-6 13z" fill="#111827"/>
+    <circle cx="32" cy="27" r="12.5" fill="#a1662f"/>
+    <path d="M19 28c0-10 6-16 13-16s13 6 13 16c-2-6-7-9-13-9s-11 3-13 9z" fill="#111827"/>
+    <circle cx="32" cy="9" r="5" fill="#111827"/>
+    <circle cx="27.5" cy="27" r="1.5" fill="#1b1b1b"/>
+    <circle cx="36.5" cy="27" r="1.5" fill="#1b1b1b"/>
+    <path d="M27 32c3 2 7 2 10 0" stroke="#1b1b1b" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+    
+    <path d="M10 64c2-12 10-18 22-18s20 6 22 18z" fill="#fb7185"/>
+  </g>
+</svg>

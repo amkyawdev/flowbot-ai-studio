@@ -1074,3 +1074,31 @@ button:focus-visible, a:focus-visible, [role="option"]:focus-visible, input:focu
   color: var(--text-faint);
 }
 .auth-download-link:hover { color: var(--brand-bright); }
+
+/* ---------- email OTP ---------- */
+.otp-head { text-align: center; margin-bottom: 14px; }
+.otp-head h2 { font-size: 18px; margin: 8px 0 4px; }
+.otp-head p { font-size: 13px; color: var(--text-dim); line-height: 1.5; }
+.otp-input {
+  width: 100%; min-height: 56px; text-align: center; font-size: 26px;
+  letter-spacing: 12px; font-weight: 700; border-radius: 14px;
+  border: 1px solid var(--border); background: rgba(0,0,0,0.35);
+  color: var(--text); outline: none;
+}
+.otp-input:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(56,189,248,0.16); }
+.otp-actions { display: flex; justify-content: space-between; gap: 8px; margin-top: 10px; }
+.auth-alt { display: flex; justify-content: center; margin-top: 10px; }
+.auth-alt button { background: transparent; color: var(--brand-bright); font-size: 12.5px; font-weight: 600; }
+.auth-alt button:hover { text-decoration: underline; }
+.otp-hint { text-align: center; font-size: 12px; color: var(--text-faint); margin-top: 8px; line-height: 1.4; }
+
+/* ---------- public chat avatars ---------- */
+.chat-avatar-img {
+  border-radius: 50%;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #0f172a;
+  flex-shrink: 0;
+  display: inline-block;
+}
+.presence-avatar .chat-avatar-img { box-shadow: 0 0 0 2px rgba(10, 10, 13, 0.9); }

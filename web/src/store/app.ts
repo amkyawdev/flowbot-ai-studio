@@ -1,11 +1,6 @@
 import { create } from 'zustand';
 import { authApi } from '@/api/client';
-
-interface User {
-  id: string;
-  email: string;
-  displayName: string;
-}
+import type { AuthUser } from '@/api/client';
 
 interface Toast {
   id: number;
@@ -13,13 +8,21 @@ interface Toast {
   kind: 'info' | 'error' | 'success';
 }
 
+export interface AuthOutcome {
+  otpRequired: boolean;
+  email?: string;
+  devCode?: string;
+  warning?: string;
+}
+
 interface AppState {
-  user: User | null;
+  user: AuthUser | null;
   token: string | null;
   ready: boolean;
   toasts: Toast[];
-  login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, displayName?: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<AuthOutcome>;
+  register: (email: string, password: string, displayName?: string) => Promise<AuthOutcome>;
+  completeAuth: (token: string, user: AuthUser) => void;
   logout: () => Promise<void>;
   boot: () => Promise<void>;
   toast: (message: string, kind?: 'info' | 'error' | 'success') => void;
@@ -46,16 +49,28 @@ export const useApp = create<AppState>((set, get) => ({
 
   async login(email, password) {
     const res = await authApi.login({ email, password });
-    if (!res || typeof res !== 'object' || !res.token) {
+    if (res.otpRequired) {
+      return { otpRequired: true, email: res.email || email, devCode: res.devCode };
+    }
+    if (!res.token || !res.user) {
       throw new Error('Login failed: no token returned. Check your connection.');
     }
-    localStorage.setItem('flowbot_token', res.token);
-    set({ token: res.token, user: res.user });
+    get().completeAuth(res.token, res.user);
+    return { otpRequired: false };
+  },
+
+  completeAuth(token, user) {
+    localStorage.setItem('flowbot_token', token);
+    set({ token, user });
   },
 
   async register(email, password, displayName) {
-    await authApi.register({ email, password, displayName });
+    const res = await authApi.register({ email, password, displayName });
+    if (res.otpRequired) {
+      return { otpRequired: true, devCode: res.devCode, warning: res.warning };
+    }
     await get().login(email, password);
+    return { otpRequired: false, warning: res.warning };
   },
 
   async logout() {
@@ -71,7 +86,7 @@ export const useApp = create<AppState>((set, get) => ({
       return;
     }
     try {
-      const res = await authApi.me() as { user: User };
+      const res = await authApi.me() as { user: AuthUser };
       set({ user: res.user, ready: true });
     } catch {
       localStorage.removeItem('flowbot_token');

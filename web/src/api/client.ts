@@ -57,13 +57,49 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
   return data as T;
 }
 
+export interface AuthUser {
+  id: string;
+  email: string;
+  displayName: string;
+}
+
+export interface AuthSession {
+  token: string;
+  user: AuthUser;
+  workspace?: { id: string };
+}
+
+export interface OtpStatus {
+  available: boolean;
+  mode: string;
+}
+
+export interface RegisterResult {
+  user: AuthUser;
+  otpRequired?: boolean;
+  emailConfigured?: boolean;
+  warning?: string;
+  devCode?: string;
+}
+
+export interface LoginResult extends Partial<AuthSession> {
+  otpRequired?: boolean;
+  email?: string;
+  devCode?: string;
+}
+
 export const authApi = {
   register: (body: { email: string; password: string; displayName?: string }) =>
-    api('/api/auth/register', { method: 'POST', body, auth: false }),
+    api<RegisterResult>('/api/auth/register', { method: 'POST', body, auth: false }),
   login: (body: { email: string; password: string }) =>
-    api<{ token: string; user: { id: string; email: string; displayName: string }; workspace: { id: string } }>('/api/auth/login', { method: 'POST', body, auth: false }),
+    api<LoginResult>('/api/auth/login', { method: 'POST', body, auth: false }),
   me: () => api('/api/auth/me'),
   logout: () => api('/api/auth/logout', { method: 'POST' }),
+  otpStatus: () => api<OtpStatus>('/api/auth/otp/status', { auth: false }),
+  requestOtp: (body: { email: string; purpose: 'login' | 'register' }) =>
+    api<{ ok: boolean; expiresIn?: number; devCode?: string }>('/api/auth/otp/request', { method: 'POST', body, auth: false }),
+  verifyOtp: (body: { email: string; code: string; purpose: 'login' | 'register' }) =>
+    api<AuthSession>('/api/auth/otp/verify', { method: 'POST', body, auth: false }),
 };
 
 export const workflowsApi = {

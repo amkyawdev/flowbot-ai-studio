@@ -14,6 +14,7 @@ import type { ActiveUser, ChatMessage as ChatMsg, PublicMessage } from '@/api/cl
 import { DEFAULT_PRESETS, loadCustomPresets, play, saveCustomPresets, validatePreset } from '@/lib/animations';
 import type { AnimationPreset } from '@/lib/animations';
 import { timeAgo } from '@flowbot/shared';
+import { avatarFor } from '@/lib/avatars';
 
 const MODEL_SUGGESTIONS: Record<string, string[]> = {
   openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini'],
@@ -46,6 +47,20 @@ function Avatar({ name, size = 30, ai = false }: { name: string; size?: number; 
     >
       {ai ? <Bot size={Math.max(12, size * 0.5)} /> : initials(name)}
     </span>
+  );
+}
+
+function UserAvatar({ userId, name, size = 30 }: { userId: string; name: string; size?: number }) {
+  return (
+    <img
+      className="chat-avatar-img"
+      src={avatarFor(userId || name)}
+      width={size}
+      height={size}
+      alt=""
+      title={name}
+      loading="lazy"
+    />
   );
 }
 
@@ -404,7 +419,7 @@ function PublicChat() {
     }
   }
 
-  const marqueeUsers = users.length > 0 ? users : [{ userId: 'me', displayName: user?.displayName || 'You', lastSeen: '' }];
+  const marqueeUsers = users.length > 0 ? users : [{ userId: user?.id || 'me', displayName: user?.displayName || 'You', lastSeen: '' }];
 
   return (
     <>
@@ -424,7 +439,7 @@ function PublicChat() {
           <div className={`presence-track ${reduced ? 'reduced' : ''}`}>
             {[...marqueeUsers, ...marqueeUsers].map((u, i) => (
               <span className="presence-avatar" key={`${u.userId}-${i}`} title={u.displayName}>
-                <Avatar name={u.displayName} size={28} />
+                <UserAvatar userId={u.userId} name={u.displayName} size={30} />
                 <i className="presence-dot" />
               </span>
             ))}
@@ -443,13 +458,13 @@ function PublicChat() {
         )}
         {messages.map((m) => (
           <div key={m.id} className={`chat-msg ${m.userId === user?.id ? 'user' : 'assistant'} chat-msg-in`}>
-            {m.userId !== user?.id && <Avatar name={m.displayName} />}
+            {m.userId !== user?.id && <UserAvatar userId={m.userId} name={m.displayName} size={30} />}
             <div className="chat-bubble-wrap">
               <div className="chat-author">{m.displayName}</div>
               <div className="chat-bubble"><span className="chat-text">{m.content}</span></div>
               <div className="chat-meta"><span>{fmtTime(m.createdAt)}</span></div>
             </div>
-            {m.userId === user?.id && <Avatar name={m.displayName} />}
+            {m.userId === user?.id && <UserAvatar userId={m.userId} name={m.displayName} size={30} />}
           </div>
         ))}
         {error && <div className="chat-error" role="alert">{error}</div>}

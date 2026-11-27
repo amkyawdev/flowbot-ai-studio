@@ -21,6 +21,7 @@
 - [Cloudflare provisioning and deploy](#cloudflare-provisioning-and-deploy)
 - [D1 migrations](#d1-migrations)
 - [AI providers](#ai-providers)
+- [Email code authentication](#email-code-authentication)
 - [Cloudflare Workers AI](#cloudflare-workers-ai)
 - [Zilliz configuration](#zilliz-configuration)
 - [Chat and Public Chat](#chat-and-public-chat)
@@ -39,6 +40,7 @@
 
 - **AI Chat page** (`/chat`) with conversation history, search, rename, archive/delete, progressive text reveal, stop, regenerate, copy, system prompt, and provider/model selection.
 - **Public Chat** (`/public-chat`) for all signed-in users, with an active-user avatar strip (left-to-right marquee), presence heartbeat, and **automatic 24-hour message cleanup**.
+- **Email code authentication** — optional passwordless sign-in and registration verification with 6-digit email codes (Resend), hashed in D1 with 10-minute expiry and rate limits.
 - **Animation Script System** — safe data-only presets (message entrance, typing, panel/sidebar transitions, presence marquee), preview/reset editor, and full `prefers-reduced-motion` support. No `eval`/`Function`.
 - **Modern loading screen** with logo ring, grid, orbs, and progress bar.
 - **Workflow builder upgrades** — run panel with input JSON, live logs and stop, import/export JSON, duplicate workflow, complete undo/redo, per-workflow autosave, searchable selectors, and validation.
@@ -154,6 +156,9 @@ See [`.env.example`](.env.example) for the canonical list.
 | `ZILLIZ_COLLECTION` | Worker env | optional collection name (default `flowbot_chunks`) |
 | `TELEGRAM_API_URL` | Worker env | optional Telegram API base URL |
 | `VITE_API_BASE_URL` | web `.env` | backend URL during dev/build |
+| `RESEND_API_KEY` / `EMAIL_FROM` | Worker secret | email OTP delivery (Resend) |
+| `AUTH_OTP_MODE` | Worker var | `optional` / `required` / `off` |
+| `OTP_DEV_ECHO` | dev only | echo OTP locally (never production) |
 
 ## Cloudflare provisioning and deploy
 
@@ -190,6 +195,7 @@ The [Deploy workflow](.github/workflows/deploy.yml) runs on `main` pushes and on
 | `CLOUDFLARE_ACCOUNT_ID` | secret or variable | Cloudflare account ID |
 | `CREDENTIAL_MASTER_KEY` / `AUTH_SESSION_SECRET` | secret | vault + session secrets |
 | `ZILLIZ_ENDPOINT` / `ZILLIZ_API_KEY` | secret | optional vector store |
+| `RESEND_API_KEY` / `EMAIL_FROM` | secret | optional email OTP delivery |
 
 ## D1 migrations
 
@@ -198,6 +204,7 @@ Migrations live in `worker/migrations/`:
 - `0001_init.sql` — users, sessions, workspaces, workflows, bots, credentials, integrations, agents, executions, logs, settings.
 - `0002_agent_endpoint.sql` — per-agent custom endpoint and credential link.
 - `0003_chat.sql` — `conversations`, `chat_messages`, `public_messages`, `public_presence`.
+- `0004_email_otp.sql` — `users.email_verified` and the `email_otps` table.
 
 **Passwords and raw API secrets are never stored in D1.** Passwords are PBKDF2-hashed with a per-user salt; API keys are AES-256-GCM ciphertext (master key in a Worker secret).
 
@@ -219,6 +226,17 @@ Provider adapters live in `worker/src/integrations/providers.ts` and support:
 - **Cloudflare Workers AI**
 
 Credentials are created in **Credentials** with API key, optional Base URL, optional custom headers (stored encrypted), and an optional default model. Connection tests run server-side and never return secrets. Node configs can override the Base URL and choose a provider/model with searchable selectors.
+
+## Email code authentication
+
+FlowBot can verify registration and offer passwordless sign-in with a 6-digit email code.
+
+1. Create a [Resend](https://resend.com) account and verify your sending domain.
+2. Set Worker secrets `RESEND_API_KEY` and `EMAIL_FROM` (for example `FlowBot <no-reply@yourdomain.com>`).
+3. Optionally set `AUTH_OTP_MODE`: `optional` (default — email-code sign-in is offered), `required` (a code is required after the password), or `off`.
+4. Deploy. The login page shows **Sign in with an email code**; registration sends a verification code.
+
+Codes are stored only as SHA-256 hashes in D1, expire after 10 minutes, allow 5 attempts, and are rate-limited to one request per email per minute. For local testing only, set `OTP_DEV_ECHO=true` in `worker/.dev.vars` to display the code in the UI — never enable it in production.
 
 ## Cloudflare Workers AI
 
@@ -247,7 +265,7 @@ Verify at **Settings → Zilliz vector store → Test connection**, or call `GET
 ## Chat and Public Chat
 
 - **AI Chat** (`/chat`) stores conversations and messages in D1. Replies are revealed progressively in the browser; **Stop** aborts the request/reveal, and **Regenerate** replaces the last assistant reply. Provider, model, credential, and system prompt are configurable per session.
-- **Public Chat** (`/public-chat`) is available to signed-in users. It shows active-user avatars above the message body with a left-to-right marquee, a presence heartbeat, and server-side rate limiting. Messages are **deleted automatically after 24 hours** (lazy cleanup on read/post plus an hourly cron).
+- **Public Chat** (`/public-chat`) is available to signed-in users. It shows active-user avatars above the message body with a left-to-right marquee, a presence heartbeat, and server-side rate limiting. Each user gets one of **30 SVG avatars (15 male / 15 female)** shown at 30px. Messages are **deleted automatically after 24 hours** (lazy cleanup on read/post plus an hourly cron).
 - Both pages respect the system `prefers-reduced-motion` setting.
 
 ## Telegram setup
@@ -289,6 +307,7 @@ Optional signing secrets: `AMKYAW_KEYSTORE_BASE64`, `AMKYAW_KEYSTORE_PASSWORD`, 
 
 - AES-256-GCM encryption for secrets; master key is a Worker secret.
 - PBKDF2 password hashing with per-user salt; no passwords in D1.
+- Email OTP codes are SHA-256 hashed, expire in 10 minutes, allow 5 attempts, and are rate-limited.
 - Telegram webhooks validated with `secret_token`; bot tokens never exposed.
 - CORS allowlist, CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and HSTS.
 - Login throttling (KV-based) and timing-safe hash comparison.
@@ -326,10 +345,11 @@ The debug APK is signed with Android's debug key, so it installs with *Unknown s
 ```
 shared/          Node definitions, graph validation, template helpers
 worker/          Cloudflare Worker (Hono), D1/KV/Queues/Workers AI, execution engine
-  migrations/    0001_init.sql, 0002_agent_endpoint.sql, 0003_chat.sql
+  migrations/    0001_init.sql, 0002_agent_endpoint.sql, 0003_chat.sql, 0004_email_otp.sql
   src/routes/    auth, workflows, executions, bots, credentials, integrations, agents, settings, chat
   src/engine/    runner, executors, vault
-  src/integrations/ providers, zilliz, telegram, mcp, http
+  src/integrations/ providers, zilliz, telegram, mcp, http, email
+  src/otp.ts     email OTP generation/hash helpers
 web/             React + Vite PWA (Capacitor Android in web/android)
   src/pages/     Dashboard, Workflows, WorkflowEditor, Chat, Bots, Integrations, Agents, Credentials, Executions, Settings
   src/editor/    NodeCard, NodeLibrary, NodeConfigSheet
