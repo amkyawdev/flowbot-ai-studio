@@ -100,8 +100,9 @@ authRoutes.post('/auth/register', async (c) => {
   ).bind(userId, email, displayName, passwordHash, salt).run();
 
   const user = { id: userId, email, displayName };
-  if (!otpAvailable(c.env)) {
-    return jsonResponse({ user, otpRequired: false, emailConfigured: false }, 201);
+  const mode = c.env.AUTH_OTP_MODE || 'off';
+  if (mode !== 'required' || !otpAvailable(c.env)) {
+    return jsonResponse({ user, otpRequired: false, emailConfigured: emailConfigured(c.env) }, 201);
   }
 
   const rateKey = `otp_req:${email}`;
@@ -151,7 +152,7 @@ authRoutes.post('/auth/login', async (c) => {
   await c.env.KV.delete(key).catch(() => undefined);
 
   // Optional/required email-code second step.
-  const mode = c.env.AUTH_OTP_MODE || 'optional';
+  const mode = c.env.AUTH_OTP_MODE || 'off';
   if (mode === 'required' && otpAvailable(c.env)) {
     try {
       const otp = await sendOtp(c.env, email, 'login');
@@ -164,12 +165,15 @@ authRoutes.post('/auth/login', async (c) => {
   return jsonResponse(await issueSession(c, user));
 });
 
-authRoutes.get('/auth/otp/status', (c) => jsonResponse({
-  available: otpAvailable(c.env),
-  mode: c.env.AUTH_OTP_MODE || 'optional',
-}));
+authRoutes.get('/auth/otp/status', (c) => {
+  const mode = c.env.AUTH_OTP_MODE || 'off';
+  return jsonResponse({ available: mode === 'required' && otpAvailable(c.env), mode });
+});
 
 authRoutes.post('/auth/otp/request', async (c) => {
+  if ((c.env.AUTH_OTP_MODE || 'off') !== 'required') {
+    return jsonResponse({ error: 'Email code authentication is disabled' }, 410);
+  }
   const body = await c.req.json().catch(() => ({}));
   const email = normalizeEmail(body?.email);
   const purpose = String(body?.purpose || 'login');
@@ -201,6 +205,9 @@ authRoutes.post('/auth/otp/request', async (c) => {
 });
 
 authRoutes.post('/auth/otp/verify', async (c) => {
+  if ((c.env.AUTH_OTP_MODE || 'off') !== 'required') {
+    return jsonResponse({ error: 'Email code authentication is disabled' }, 410);
+  }
   const body = await c.req.json().catch(() => ({}));
   const email = normalizeEmail(body?.email);
   const code = String(body?.code || '').trim();

@@ -7,8 +7,8 @@ compatibility_flags = ["nodejs_compat"]
 enabled = true
 
 [vars]
-# optional: 'optional' (email-code sign-in available) | 'required' | 'off'
-AUTH_OTP_MODE = "optional"
+# Email-code auth is disabled. Set to 'required' to enable it again.
+AUTH_OTP_MODE = "off"
 
 # Hourly cleanup of public chat history older than 24 hours.
 [triggers]

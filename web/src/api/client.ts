@@ -15,6 +15,8 @@ function resolveApiBase(): string {
       window.location.protocol === 'capacitor:' ||
       (window.location.hostname === 'localhost' && window.location.protocol === 'https:');
     if (isNative) return PROD_API_URL;
+    // Preview hosts serve the SPA but not the API — point at the Worker.
+    if (/\.prod-runtime\.all-hands\.dev$/i.test(window.location.hostname)) return PROD_API_URL;
   }
   return '';
 }
@@ -33,12 +35,19 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
     const token = localStorage.getItem('flowbot_token');
     if (token) headers['Authorization'] = `Bearer ${token}`;
   }
-  const res = await fetch(`${API_BASE}${path}`, {
-    method: opts.method || 'GET',
-    headers,
-    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
-    signal: opts.signal,
-  });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, {
+      method: opts.method || 'GET',
+      headers,
+      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+      signal: opts.signal,
+    });
+  } catch (e) {
+    if (e instanceof DOMException && e.name === 'AbortError') throw e;
+    const where = API_BASE || (typeof window !== 'undefined' ? window.location.origin : 'the server');
+    throw new Error(`Cannot reach the server at ${where}. Check your connection and try again.`);
+  }
   let data: unknown = null;
   let parsed = false;
   try { data = await res.json(); parsed = true; } catch { /* not JSON */ }

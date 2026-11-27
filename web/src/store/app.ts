@@ -66,9 +66,7 @@ export const useApp = create<AppState>((set, get) => ({
 
   async register(email, password, displayName) {
     const res = await authApi.register({ email, password, displayName });
-    if (res.otpRequired) {
-      return { otpRequired: true, devCode: res.devCode, warning: res.warning };
-    }
+    // Password-only auth: always sign in after registration.
     await get().login(email, password);
     return { otpRequired: false, warning: res.warning };
   },
