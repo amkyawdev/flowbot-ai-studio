@@ -1,0 +1,44 @@
+name = "flowbot-ai-studio"
+main = "src/index.ts"
+compatibility_date = "2024-11-01"
+compatibility_flags = ["nodejs_compat"]
+
+# Workers Logs
+[observability]
+enabled = true
+
+# ---------------------------------------------------------------------------
+# Bindings. IDs are wired automatically when using `wrangler d1 create` /
+# `wrangler kv namespace create` / `wrangler r2 bucket create`.
+# Replace placeholders below with real IDs from your account.
+# ---------------------------------------------------------------------------
+
+# D1 SQLite database (relational app data)
+[[d1_databases]]
+binding = "DB"
+database_name = "flowbot-db"
+database_id = "REPLACE_WITH_D1_DATABASE_ID"
+migrations_dir = "migrations"
+
+# KV (session cache, webhook routing)
+[[kv_namespaces]]
+binding = "KV"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+preview_id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+# R2 (file storage)
+[[r2_buckets]]
+binding = "R2"
+bucket_name = "flowbot-files"
+
+# Queue for background execution of long-running workflows
+[[queues.producers]]
+binding = "EXECUTION_QUEUE"
+queue = "flowbot-executions"
+
+[[queues.consumers]]
+queue = "flowbot-executions"
+max_batch_size = 1
+max_batch_timeout = 30
+max_retries = 3
+dead_letter_queue = "flowbot-executions-dlq"

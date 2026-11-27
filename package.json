@@ -1,0 +1,22 @@
+{
+  "name": "flowbot-ai-studio",
+  "version": "1.0.0",
+  "private": true,
+  "description": "FlowBot AI Studio — mobile-first AI automation and Telegram Bot builder",
+  "workspaces": [
+    "shared",
+    "web",
+    "worker"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=web",
+    "dev:worker": "npm run dev --workspace=worker",
+    "build": "npm run build --workspace=worker && npm run build --workspace=web",
+    "test": "npm run test --workspace=worker && npm run test --workspace=web",
+    "lint": "npm run lint --workspace=worker && npm run lint --workspace=web",
+    "typecheck": "npm run typecheck --workspace=worker && npm run typecheck --workspace=web"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

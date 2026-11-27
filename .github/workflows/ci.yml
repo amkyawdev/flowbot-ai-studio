@@ -1,0 +1,53 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck shared
+        run: npm run typecheck --workspace=@flowbot/shared
+
+      - name: Typecheck worker
+        run: npm run typecheck --workspace=flowbot-worker
+
+      - name: Test worker (Zilliz live tests auto-skip without secrets)
+        run: npm run test --workspace=flowbot-worker
+
+      - name: Typecheck web
+        run: npm run typecheck --workspace=flowbot-web
+
+      - name: Test web
+        run: npm run test --workspace=flowbot-web
+
+      - name: Build worker (wrangler dry-run)
+        run: npm run build --workspace=flowbot-worker
+
+      - name: Build web (Vite + PWA)
+        run: npm run build --workspace=flowbot-web
+
+      - name: Upload web dist (for later jobs)
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-dist
+          path: web/dist
+          if-no-files-found: error
