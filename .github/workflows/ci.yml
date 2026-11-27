@@ -39,11 +39,13 @@ jobs:
       - name: Test web
         run: npm run test --workspace=flowbot-web
 
-      - name: Build worker (wrangler dry-run)
-        run: npm run build --workspace=flowbot-worker
-
+      # Build the PWA first: the worker's [assets] binding points at web/dist,
+      # so the wrangler dry-run requires it to exist.
       - name: Build web (Vite + PWA)
         run: npm run build --workspace=flowbot-web
+
+      - name: Build worker (wrangler dry-run)
+        run: npm run build --workspace=flowbot-worker
 
       - name: Upload web dist (for later jobs)
         uses: actions/upload-artifact@v4
