@@ -13,9 +13,9 @@ const icons: Record<string, any> = {
   'code-2': Code2, timer: Timer, search: Search, database: Database, 'shield-alert': ShieldAlert,
 };
 
-function NodeCardComponent({ data, selected, id }: NodeProps & { data: any }) {
-  const type = (data?.nodeType as string) || 'set';
-  const def = getNodeDefinition(type);
+function NodeCardComponent({ type, data, selected }: NodeProps & { data: any }) {
+  const nodeType = type || (data?.nodeType as string) || 'set';
+  const def = getNodeDefinition(nodeType);
   const Icon = icons[def?.icon ?? ''] ?? Bot;
   const color = def?.color ?? '#38bdf8';
   const inputs = def?.inputs ?? [];

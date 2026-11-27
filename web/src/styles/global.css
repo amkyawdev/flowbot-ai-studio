@@ -1102,3 +1102,21 @@ button:focus-visible, a:focus-visible, [role="option"]:focus-visible, input:focu
   display: inline-block;
 }
 .presence-avatar .chat-avatar-img { box-shadow: 0 0 0 2px rgba(10, 10, 13, 0.9); }
+
+/* ---------- ReactFlow node wrapper must not paint a white box ---------- */
+.react-flow__node-default,
+.react-flow__node {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  box-shadow: none !important;
+  color: var(--text) !important;
+  width: auto !important;
+}
+.react-flow__node .glass {
+  background: #111118 !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px;
+  color: var(--text) !important;
+}
+.react-flow__edge-path { stroke: var(--brand-bright); stroke-width: 2; }
