@@ -1,45 +1,82 @@
+<p align="right"><b>English</b> · <a href="README.my.md">မြန်မာ</a></p>
+
 # FlowBot AI Studio
 
-**Mobile-first AI automation and Telegram Bot builder** — a no-code node editor powered by Cloudflare Workers, D1, R2, Queues and Zilliz Cloud. Design automations on your phone with a full-screen canvas, deploy them to the edge, and connect them to Telegram and AI providers.
+**Mobile-first AI automation, chat, and Telegram Bot builder** — a no-code node editor plus an AI chat workspace, powered by Cloudflare Workers, D1, KV, Queues, Workers AI, and Zilliz Cloud.
 
-![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee)
+![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.1-34d399)
 
 > **Developer:** Aung Myo Kyaw · **Brand:** AmkyawDev · **Email:** aung.thuyrain.at449@gmail.com · **Location:** Nay Pyi Taw, Myanmar · **TikTok:** https://www.tiktok.com/@amkyaw.dev1
 
 ---
 
-## Table of contents
+## Contents
 
+- [What's new in v1.2.1](#whats-new-in-v121)
 - [Features](#features)
+- [Screens and routes](#screens-and-routes)
 - [Architecture](#architecture)
-- [Screens](#screens)
 - [Getting started (local)](#getting-started-local)
-- [Cloudflare provisioning & deploy](#cloudflare-provisioning--deploy)
+- [Environment variables](#environment-variables)
+- [Cloudflare provisioning and deploy](#cloudflare-provisioning-and-deploy)
 - [D1 migrations](#d1-migrations)
-- [R2 & Queues setup](#r2--queues-setup)
+- [AI providers](#ai-providers)
+- [Cloudflare Workers AI](#cloudflare-workers-ai)
 - [Zilliz configuration](#zilliz-configuration)
+- [Chat and Public Chat](#chat-and-public-chat)
 - [Telegram setup](#telegram-setup)
 - [PWA install](#pwa-install)
-- [Android build & install](#android-build--install)
+- [Android build and install](#android-build-and-install)
 - [Security](#security)
 - [Troubleshooting](#troubleshooting)
 - [Download Android App](#download-android-app)
-- [Environment variables](#environment-variables)
+- [Project structure](#project-structure)
 - [Admin information](#admin-information)
 
 ---
 
+## What's new in v1.2.1
+
+- **AI Chat page** (`/chat`) with conversation history, search, rename, archive/delete, progressive text reveal, stop, regenerate, copy, system prompt, and provider/model selection.
+- **Public Chat** (`/public-chat`) for all signed-in users, with an active-user avatar strip (left-to-right marquee), presence heartbeat, and **automatic 24-hour message cleanup**.
+- **Animation Script System** — safe data-only presets (message entrance, typing, panel/sidebar transitions, presence marquee), preview/reset editor, and full `prefers-reduced-motion` support. No `eval`/`Function`.
+- **Modern loading screen** with logo ring, grid, orbs, and progress bar.
+- **Workflow builder upgrades** — run panel with input JSON, live logs and stop, import/export JSON, duplicate workflow, complete undo/redo, per-workflow autosave, searchable selectors, and validation.
+- **Cloudflare Workers AI** via the server-side `env.AI` binding and a `cloudflareAI` node.
+- **Zilliz hardening** — endpoint normalization, camelCase `dbName`, `ZILLIZ_URL`/`ZILLIZ_TOKEN` aliases, and runtime status/test endpoints.
+- **Security** — CORS allowlist, CSP and security headers, login throttling, execution-log redaction, workspace-scoped version history.
+
 ## Features
 
-- **Node-based workflow editor** — mobile full-screen canvas with pinch zoom/pan, touch node drag, connect mode, node library drawer, configuration bottom sheet, undo/redo, and autosave with recovery.
-- **15 built-in node types**, extensible through a plugin/adapter registry: Manual Trigger, Webhook Trigger, Telegram Trigger, Telegram Send Message, AI Agent, OpenAI-compatible Chat Completion, Google Gemini, HTTP Request, IF, Switch, Set/Transform, Delay, Zilliz Vector Search, Zilliz Vector Insert, and Error Handler.
-- **Edge execution engine** — graph validation, topological ordering, per-node timeouts, bounded retries, error-handler routing, per-user isolation, execution records + logs, and background jobs via Cloudflare Queues.
-- **Telegram Bot manager** — securely connect BotFather tokens, set webhooks with secret_token validation, start/help/custom commands, custom keyboards, per-bot AI prompt config, test messages and a message log.
-- **AI Agent builder** — reusable agents with system prompts, provider/model selection, temperature, memory/tools and structured output (JSON schema).
-- **Credential vault** — API keys and tokens encrypted with AES-256-GCM (Web Crypto); the master key is stored only as a Worker secret and secrets are never exposed to the browser.
-- **Integrations** — OpenAI-compatible endpoints (OpenAI, Groq, OpenRouter), Anthropic, Gemini, generic HTTP/REST, and a **universal remote MCP connector** (Streamable HTTP) with dynamic tool discovery.
-- **Installable PWA** + **Capacitor Android** packaging with reproducible GitHub Actions APK/AAB builds.
-- **Cloudflare-native data** — D1 for relational/app data, R2 for files, Queues for background execution, Zilliz Cloud for vector search & long-term memory (configured via Worker secrets, degrades gracefully when absent).
+- **Node-based workflow editor** — full-screen canvas, pinch zoom/pan, touch drag, animated connections, node library with quick add / recently used / categories / search, configuration sheet with validation, undo/redo, import/export, and autosave with recovery.
+- **16 built-in node types** — Manual Trigger, Webhook Trigger, Telegram Trigger, Telegram Send Message, AI Agent, OpenAI-compatible Chat, Google Gemini, **Cloudflare Workers AI**, HTTP Request, IF, Switch, Set/Transform, Delay, Zilliz Vector Search, Zilliz Vector Insert, and Error Handler.
+- **Edge execution engine** — graph validation, topological ordering, per-node timeouts, bounded retries, error-handler routing, per-workspace isolation, execution records and logs, and background jobs via Cloudflare Queues.
+- **AI Chat workspace** — persistent conversations, provider/model selection, system prompts, streaming-style reveal, regenerate, and error recovery.
+- **Public Chat room** — presence avatars, shared messages, rate limiting, and 24-hour retention.
+- **Telegram Bot manager** — BotFather tokens stored encrypted, webhook registration with `secret_token`, commands, keyboards, per-bot AI replies, test messages, and a message log.
+- **AI Agent builder** — reusable agents with system prompt, provider/model, temperature, tools, and structured output (JSON schema).
+- **Credential vault** — API keys and tokens encrypted with AES-256-GCM (Web Crypto); the master key is a Worker secret and secrets never reach the browser.
+- **Integrations** — OpenAI-compatible endpoints (OpenAI, Groq, OpenRouter, custom), Anthropic, Gemini, Cloudflare Workers AI, generic HTTP/REST, and a remote MCP connector.
+- **Installable PWA** and **Capacitor Android** packaging with GitHub Actions APK/AAB builds.
+- **Cloudflare-native data** — D1 for relational data, KV for sessions/rate limits, Queues for background execution, Workers AI for edge inference, and Zilliz Cloud for vector search. R2 is optional and not enabled in the default deployment.
+
+## Screens and routes
+
+| Route | Screen |
+|---|---|
+| `/` | Dashboard |
+| `/workflows` | Workflow list (card grid, search, run/duplicate/delete) |
+| `/workflows/:id` | Workflow editor (canvas, node library, config sheet, run panel) |
+| `/chat` | AI Chat workspace |
+| `/public-chat` | Public Chat room |
+| `/bots` | Telegram bots |
+| `/integrations` | Integrations (MCP, Zilliz) |
+| `/agents` | AI Agents |
+| `/credentials` | Credential vault |
+| `/executions` | Execution history and logs |
+| `/settings` | Account, Zilliz status/test, runtime flags, about |
+
+Designed mobile-first (320 / 360 / 390 / 412 px), then tablet and desktop (sidebar + wider panels). Touch targets ≥ 44 px, dark nero + cyan identity, glass surfaces, reduced-motion friendly.
 
 ## Architecture
 
@@ -53,14 +90,14 @@ flowchart LR
 
     subgraph Cloudflare Edge
         W[Worker<br/>Hono API + Execution Engine]
-        D1[(D1 SQLite<br/>users/workflows/bots/agents<br/>credentials meta/executions/logs)]
-        KV[(KV sessions)]
-        R2[(R2 Files)]
+        D1[(D1 SQLite<br/>users/workflows/chat<br/>bots/agents/credentials/executions)]
+        KV[(KV sessions + rate limits)]
         Q{{Queue background execution}}
+        AIB[Workers AI binding]
     end
 
     subgraph External
-        Z[Zilliz Cloud / Milvus vector store]
+        Z[Zilliz Cloud / Milvus]
         AI[OpenAI/Gemini/Anthropic/Groq]
         MCP[Remote MCP servers]
     end
@@ -70,20 +107,14 @@ flowchart LR
     TG -->|webhook| W
     W <--> D1
     W --> KV
-    W --> R2
     W <--> Q
+    W <--> AIB
     W <--> Z
     W <--> AI
     W <--> MCP
 ```
 
-The Worker owns all business logic. **No arbitrary `eval`/`Function`** runs on the edge — workflows are DAGs of typed, sandboxed node executors. User-provided code nodes are intentionally omitted from v1; a sandboxed code runner is on the roadmap.
-
-## Screens
-
-`Dashboard` · `Workflows` · `Workflow editor (canvas)` · `Bots` · `Integrations` · `AI Agents` · `Credentials` · `Executions` · `Settings`
-
-Designed and tested for **320 / 360 / 390 / 412 px** mobile widths first, then tablet/desktop (sidebar + wider panels). Touch targets ≥ 44 px, dark nero + light-blue/cyan identity, glass surfaces, reduced-motion friendly. Real screenshots will be added once production hosting is live.
+The Worker owns all business logic. **No arbitrary `eval`/`Function`** runs on the edge — workflows are DAGs of typed, sandboxed node executors.
 
 ## Getting started (local)
 
@@ -93,119 +124,147 @@ Requires Node 20+.
 # 1. Install all workspaces (shared, worker, web)
 npm install
 
-# 2. Run the Worker locally (miniflare). Create worker/.dev.vars with secrets:
-#    CREDENTIAL_MASTER_KEY  (base64 32 bytes, e.g. `openssl rand -base64 32`)
-#    AUTH_SESSION_SECRET    (e.g. `openssl rand -hex 32`)
+# 2. Create worker/.dev.vars (never commit it)
+#    CREDENTIAL_MASTER_KEY  (openssl rand -base64 32)
+#    AUTH_SESSION_SECRET    (openssl rand -hex 32)
 #    ZILLIZ_ENDPOINT / ZILLIZ_API_KEY (optional, server-side only)
 npm run dev:worker          # http://localhost:8787
 
-# 3. Seed local D1
+# 3. Apply local D1 migrations
 cd worker && npx wrangler d1 migrations apply flowbot-db --local
 
 # 4. Run the web app
 npm run dev:web             # http://localhost:5173
 ```
 
-The PWA builds a service worker for offline app-shell caching. See [PWA install](#pwa-install).
+> Build order matters: the Worker serves `web/dist`, so build the web workspace first (`npm run build --workspace=flowbot-web`) before the Worker.
 
-## Cloudflare provisioning & deploy
+## Environment variables
+
+See [`.env.example`](.env.example) for the canonical list.
+
+| Variable | Scope | Notes |
+|---|---|---|
+| `CREDENTIAL_MASTER_KEY` | Worker secret | base64 32-byte key for the AES-256-GCM vault |
+| `AUTH_SESSION_SECRET` | Worker secret | session signing key |
+| `APP_BASE_URL` | Worker var/secret | public origin of the Worker |
+| `CORS_ORIGINS` | Worker env | comma-separated allowed origins (an allowlist is built in) |
+| `ZILLIZ_ENDPOINT` / `ZILLIZ_URL` | Worker var/secret | Zilliz REST base URL (server-side only) |
+| `ZILLIZ_API_KEY` / `ZILLIZ_TOKEN` | Worker secret | Zilliz API key (never exposed) |
+| `ZILLIZ_COLLECTION` | Worker env | optional collection name (default `flowbot_chunks`) |
+| `TELEGRAM_API_URL` | Worker env | optional Telegram API base URL |
+| `VITE_API_BASE_URL` | web `.env` | backend URL during dev/build |
+
+## Cloudflare provisioning and deploy
 
 1. **Log in to Wrangler**:
    ```bash
    npx wrangler login
    ```
-2. **Create resources** and paste the returned IDs into `worker/wrangler.toml` (replace the `REPLACE_WITH_*` placeholders):
+2. **Create resources** and paste the returned IDs into `worker/wrangler.toml`:
    ```bash
-   npx wrangler d1 create flowbot-db             # → database_id
-   npx wrangler kv namespace create FLOWBOT_KV   # → id (+ preview_id)
-   npx wrangler r2 bucket create flowbot-files
-   ```
-3. **Create the execution queue**:
-   ```bash
+   npx wrangler d1 create flowbot-db
+   npx wrangler kv namespace create FLOWBOT_KV
    npx wrangler queues create flowbot-executions
    ```
-4. **Set Worker secrets** (never commit these):
+3. **Set Worker secrets**:
    ```bash
    cd worker
-   echo "$CREDENTIAL_MASTER_KEY" | npx wrangler secret put CREDENTIAL_MASTER_KEY
-   echo "$AUTH_SESSION_SECRET"   | npx wrangler secret put AUTH_SESSION_SECRET
-   echo "$ZILLIZ_ENDPOINT"       | npx wrangler secret put ZILLIZ_ENDPOINT   # optional
-   echo "$ZILLIZ_API_KEY"        | npx wrangler secret put ZILLIZ_API_KEY    # optional (server-side only)
-   echo "$APP_BASE_URL"          | npx wrangler secret put APP_BASE_URL      # your public URL
+   printf '%s' "$CREDENTIAL_MASTER_KEY" | npx wrangler secret put CREDENTIAL_MASTER_KEY
+   printf '%s' "$AUTH_SESSION_SECRET"   | npx wrangler secret put AUTH_SESSION_SECRET
+   printf '%s' "$ZILLIZ_ENDPOINT"       | npx wrangler secret put ZILLIZ_ENDPOINT   # optional
+   printf '%s' "$ZILLIZ_API_KEY"        | npx wrangler secret put ZILLIZ_API_KEY    # optional
    ```
-5. **Apply migrations**:
+4. **Apply migrations and deploy**:
    ```bash
    npx wrangler d1 migrations apply flowbot-db --remote
-   ```
-6. **Deploy**:
-   ```bash
    npx wrangler deploy
    ```
 
-The included [Deploy workflow](.github/workflows/deploy.yml) runs on `main` pushes when the standard GitHub secrets are configured:
+The [Deploy workflow](.github/workflows/deploy.yml) runs on `main` pushes and on manual dispatch. It builds the web app, deploys the Worker, applies D1 migrations, and sets Worker secrets.
 
-| Secret | Purpose |
-|---|---|
-| `CLOUDFLARE_API_TOKEN` | Workers + D1 + KV + R2 + Queues edit |
-| `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
-| `CREDENTIAL_MASTER_KEY` / `AUTH_SESSION_SECRET` | Vault + session secrets |
-| `ZILLIZ_ENDPOINT` / `ZILLIZ_API_KEY` | Optional vector store (endpoint = variable, API key = secret) |
+| GitHub setting | Kind | Purpose |
+|---|---|---|
+| `CLOUDFLARE_API_KEY` | secret | Cloudflare Global API Key used by Wrangler |
+| `CLOUDFLARE_EMAIL` | variable | Cloudflare account email |
+| `CLOUDFLARE_ACCOUNT_ID` | secret or variable | Cloudflare account ID |
+| `CREDENTIAL_MASTER_KEY` / `AUTH_SESSION_SECRET` | secret | vault + session secrets |
+| `ZILLIZ_ENDPOINT` / `ZILLIZ_API_KEY` | secret | optional vector store |
 
 ## D1 migrations
 
-Migrations live in `worker/migrations/` (`0001_init.sql`). They create:
+Migrations live in `worker/migrations/`:
 
-- `users`, `sessions`, `workspaces`, `workspace_members`
-- `workflows`, `workflow_versions` (graph snapshots)
-- `bots`, `bot_messages`
-- `credentials` (encrypted payloads + metadata), `integrations`, `agents`
-- `executions`, `execution_logs`
-- `settings`
+- `0001_init.sql` — users, sessions, workspaces, workflows, bots, credentials, integrations, agents, executions, logs, settings.
+- `0002_agent_endpoint.sql` — per-agent custom endpoint and credential link.
+- `0003_chat.sql` — `conversations`, `chat_messages`, `public_messages`, `public_presence`.
 
 **Passwords and raw API secrets are never stored in D1.** Passwords are PBKDF2-hashed with a per-user salt; API keys are AES-256-GCM ciphertext (master key in a Worker secret).
 
 ```bash
-npx wrangler d1 migrations apply flowbot-db --local    # local dev
+npx wrangler d1 migrations apply flowbot-db --local    # local
 npx wrangler d1 migrations apply flowbot-db --remote   # production
 ```
 
-## R2 & Queues setup
+## AI providers
 
-- **R2** — file storage (branding, uploads). `npx wrangler r2 bucket create flowbot-files`.
-- **Queues** — background execution of long-running workflows so HTTP responses stay fast. The Producer (`EXECUTION_QUEUE`) enqueues `execute-workflow` messages; the consumer runs the graph with timeouts/retries and writes `executions` + `execution_logs`.
+Provider adapters live in `worker/src/integrations/providers.ts` and support:
+
+- **OpenAI** (`https://api.openai.com/v1`)
+- **Groq** (`https://api.groq.com/openai/v1`)
+- **OpenRouter** (`https://openrouter.ai/api/v1`)
+- **Custom OpenAI-compatible** (requires a Base URL)
+- **Google Gemini**
+- **Anthropic**
+- **Cloudflare Workers AI**
+
+Credentials are created in **Credentials** with API key, optional Base URL, optional custom headers (stored encrypted), and an optional default model. Connection tests run server-side and never return secrets. Node configs can override the Base URL and choose a provider/model with searchable selectors.
+
+## Cloudflare Workers AI
+
+Workers AI runs entirely server-side through the `env.AI` binding — no API key is stored or sent to the browser.
+
+```toml
+# worker/wrangler.toml
+[ai]
+binding = "AI"
+```
+
+Use the **Cloudflare Workers AI** node (or select `cloudflare` in Chat/Agents) and choose a `@cf/...` model. If the binding is unavailable, the UI reports it clearly instead of failing silently.
 
 ## Zilliz configuration
 
-Zilliz Cloud (Milvus) powers **vector embeddings, semantic search, long-term memory and knowledge-base chunks**. It is a configurable endpoint, not a required credential:
+Zilliz Cloud (Milvus) powers vector search and knowledge chunks.
 
-- `ZILLIZ_ENDPOINT` — the Zilliz Cloud REST base URL (e.g. `https://in03-…cloud.zilliz.com`). Configured as a Cloudflare Worker **variable** (`vars`) or secret.
-- `ZILLIZ_API_KEY` — the Zilliz API key. Configured as a Cloudflare Worker **secret** via `npx wrangler secret put ZILLIZ_API_KEY`. Read **only** server-side from `env.ZILLIZ_API_KEY` — never committed, logged, or exposed to the browser.
+- `ZILLIZ_ENDPOINT` (alias `ZILLIZ_URL`) — REST base URL, e.g. `https://in03-…cloud.zilliz.com` (no `/v2/...` path).
+- `ZILLIZ_API_KEY` (alias `ZILLIZ_TOKEN`) — API key, stored as a Worker secret.
 - `ZILLIZ_COLLECTION` — optional collection name (default `flowbot_chunks`).
-- The `Zilliz Vector Insert` node **auto-creates the collection** on first write.
-- When `ZILLIZ_ENDPOINT`/`ZILLIZ_API_KEY` are absent, vector nodes **fail gracefully** with a clear "not configured" message — the rest of the workflow still runs.
 
-The API contract (camelCase collection names) is verified against a live Zilliz Cloud in `worker/test/zilliz-live.test.ts`, covering list → create → describe → insert → search → drop. Configuration validation is covered by `worker/test/zilliz-config.test.ts`. **The API key is consumed strictly from the Worker secret binding and never reaches client code.**
+The Worker normalizes the endpoint, accepts camelCase/snake_case collection names, and uses `dbName` in REST payloads. The insert node auto-creates the collection on first write. When unconfigured, vector nodes fail gracefully with a clear message.
+
+Verify at **Settings → Zilliz vector store → Test connection**, or call `GET /api/zilliz/status` / `POST /api/zilliz/test`. Live coverage: `worker/test/zilliz-live.test.ts` (list → create → describe → insert → search → drop). Config coverage: `worker/test/zilliz-config.test.ts` and `worker/test/zilliz-utils.test.ts`.
+
+## Chat and Public Chat
+
+- **AI Chat** (`/chat`) stores conversations and messages in D1. Replies are revealed progressively in the browser; **Stop** aborts the request/reveal, and **Regenerate** replaces the last assistant reply. Provider, model, credential, and system prompt are configurable per session.
+- **Public Chat** (`/public-chat`) is available to signed-in users. It shows active-user avatars above the message body with a left-to-right marquee, a presence heartbeat, and server-side rate limiting. Messages are **deleted automatically after 24 hours** (lazy cleanup on read/post plus an hourly cron).
+- Both pages respect the system `prefers-reduced-motion` setting.
 
 ## Telegram setup
 
-1. Open Telegram → **@BotFather** → `/newbot` → name it → copy the token.
-2. In FlowBot → **Bots** → **Add bot** → paste the token. The server verifies it with `getMe` (so the username already exists) and stores it encrypted.
-3. Optionally configure **commands** (`/start`, `/help`, custom) and an **AI reply** agent.
-4. In the workflow editor, add a **Telegram Trigger** (select the bot, optional `/command` filter) and **Telegram Send Message** nodes.
-5. Click **Set webhook** to register `<APP_BASE_URL>/api/in/telegram/<secret>` with Telegram. The `secret_token` is validated on every update and tokens never leave the server.
-
-Bot creation **must happen in Telegram via @BotFather** — FlowBot only manages the token afterwards.
+1. Open Telegram → **@BotFather** → `/newbot` → copy the token.
+2. In FlowBot → **Bots** → **Add bot** → paste the token. The server verifies it with `getMe` and stores it encrypted.
+3. Optionally configure commands and an AI reply agent.
+4. In the editor, add a **Telegram Trigger** and **Telegram Send Message** node.
+5. Click **Set webhook** to register `<APP_BASE_URL>/api/in/telegram/<secret>`. The `secret_token` is validated on every update.
 
 ## PWA install
 
-- Open the deployed web app → browser *Add to Home screen* (Android Chrome / Edge, iOS Safari *Share → Add to Home Screen*).
-- The service worker caches the app shell for offline use. **Backend workflow runs are never faked offline** — the UI shows when the API is unreachable and does not execute workflow nodes client-side.
+Open the deployed app → *Add to Home screen* (Android Chrome/Edge, iOS Safari *Share → Add to Home Screen*). The service worker caches the app shell for offline use; backend workflow runs are never faked offline.
 
-## Android build & install
+## Android build and install
 
-FlowBot uses **Capacitor** to package the PWA as a native Android app (Gradle project in `web/android/`).
-
-### Local build (debug APK)
+FlowBot uses **Capacitor** (Gradle project in `web/android/`).
 
 ```bash
 npm install
@@ -216,40 +275,36 @@ echo "sdk.dir=$ANDROID_HOME" > local.properties
 # APK: web/android/app/build/outputs/apk/debug/app-debug.apk
 ```
 
-### GitHub Actions
+GitHub Actions:
 
-- [`.github/workflows/ci.yml`](.github/workflows/ci.yml) — typecheck, tests, builds on every push/PR.
-- [`.github/workflows/android.yml`](.github/workflows/android.yml) — debug APK on every push; signed release APK + AAB when signing secrets are configured.
-- [`.github/workflows/release.yml`](.github/workflows/release.yml) — builds both and publishes a GitHub Release on `v*` tags.
+- [`ci.yml`](.github/workflows/ci.yml) — typecheck, tests, builds.
+- [`android.yml`](.github/workflows/android.yml) — debug APK on push; signed release APK + AAB when signing secrets exist.
+- [`release.yml`](.github/workflows/release.yml) — publishes a GitHub Release on `v*` tags.
 
-Optional signing secrets (all four required, else release stays unsigned):
-
-| Secret | Description |
-|---|---|
-| `AMKYAW_KEYSTORE_BASE64` | base64 of your `.jks` keystore |
-| `AMKYAW_KEYSTORE_PASSWORD` | store & key password |
-| `AMKYAW_KEY_ALIAS` | key alias |
-| `AMKYAW_KEY_PASSWORD` | key password |
+Optional signing secrets: `AMKYAW_KEYSTORE_BASE64`, `AMKYAW_KEYSTORE_PASSWORD`, `AMKYAW_KEY_ALIAS`, `AMKYAW_KEY_PASSWORD`.
 
 **Install:** allow *Unknown sources*, download the APK from [Releases](#download-android-app), and open it.
 
 ## Security
 
-- Secrets encrypted with **AES-256-GCM**; master key is a Worker secret.
-- **PBKDF2** password hashing with per-user salt; no passwords in D1.
-- Telegram webhooks validated with **`secret_token`**; bot tokens never exposed to the browser.
-- **No arbitrary `eval`/`Function`** on the edge — typed, sandboxed node executors.
-- Execution runs **server-side**, never in the browser; per-user/workspace isolation on every query.
+- AES-256-GCM encryption for secrets; master key is a Worker secret.
+- PBKDF2 password hashing with per-user salt; no passwords in D1.
+- Telegram webhooks validated with `secret_token`; bot tokens never exposed.
+- CORS allowlist, CSP, `X-Content-Type-Options`, `X-Frame-Options`, `Referrer-Policy`, `Permissions-Policy`, and HSTS.
+- Login throttling (KV-based) and timing-safe hash comparison.
+- Execution logs redact secret-like keys and truncate long values.
+- No arbitrary `eval`/`Function` on the edge; workflow execution is server-side with per-workspace isolation.
 - All `/api/` traffic is network-only in the service worker.
 
 ## Troubleshooting
 
 | Symptom | Fix |
 |---|---|
-| `Zilliz is not configured` | Set `ZILLIZ_ENDPOINT` + `ZILLIZ_API_KEY` as Worker vars/secret. |
-| `Invalid Telegram bot token` | Paste the exact token from @BotFather (starts `123456789:…`). |
-| Webhook returns 404 | Webhook URL must equal `<APP_BASE_URL>/api/in/telegram/<secret>`. |
-| `Cannot find collection` | The insert node auto-creates it; match the vector dimension if manual. |
+| `Zilliz is not configured` | Set `ZILLIZ_ENDPOINT` + `ZILLIZ_API_KEY` (or `ZILLIZ_URL` + `ZILLIZ_TOKEN`). |
+| Zilliz test fails with 401 | Check the API key and that the endpoint is the base URL, not a `/v2/...` path. |
+| Public Chat 500 | Ensure migration `0003_chat.sql` is applied and the Worker is redeployed. |
+| `Invalid Telegram bot token` | Paste the exact token from @BotFather. |
+| Webhook 404 | URL must equal `<APP_BASE_URL>/api/in/telegram/<secret>`. |
 | D1 "unknown database" (local) | Run `npx wrangler d1 migrations apply flowbot-db --local`. |
 | Android `sdk.dir` error | Set `local.properties` or open in Android Studio. |
 
@@ -261,23 +316,26 @@ Pre-built artifacts publish to the **GitHub Releases** page.
 
 | Asset | Description | Link |
 |---|---|---|
-| `app-debug.apk` (≈4.2 MB) | Debug build (1.2.1) — installable on any Android device | [Download APK](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.1/app-debug.apk) |
-| `app-release.aab` (≈3.0 MB) | Release Android App Bundle (unsigned — for Play Store / signing by the owner) | [Download AAB](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.1/app-release.aab) |
+| `app-debug.apk` | Debug build (1.2.1) — installable on any Android device | [Download APK](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.1/app-debug.apk) |
+| `app-release.aab` | Release Android App Bundle (unsigned unless signing secrets are set) | [Download AAB](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.1/app-release.aab) |
 
-The `app-debug.apk` is signed with Android's debug key, so it installs cleanly on a phone with *Unknown sources* enabled. A signed `app-release.apk` will be attached to future releases once the `AMKYAW_KEYSTORE_*` signing secrets are configured.
+The debug APK is signed with Android's debug key, so it installs with *Unknown sources* enabled.
 
-## Environment variables
+## Project structure
 
-See [`.env.example`](.env.example) for the canonical list. Key variables:
-
-| Variable | Scope | Notes |
-|---|---|---|
-| `CREDENTIAL_MASTER_KEY` | Worker secret | base64 32-byte key for the vault |
-| `AUTH_SESSION_SECRET` | Worker secret | session signing key |
-| `APP_BASE_URL` | Worker secret | public origin of the Worker |
-| `CORS_ORIGINS` | Worker env | comma-separated allowed origins |
-| `ZILLIZ_ENDPOINT`, `ZILLIZ_API_KEY`, `ZILLIZ_COLLECTION` | Worker var/secret | optional vector store (endpoint + API key are server-side only) |
-| `VITE_API_BASE_URL` | web `.env` | backend URL during dev/build |
+```
+shared/          Node definitions, graph validation, template helpers
+worker/          Cloudflare Worker (Hono), D1/KV/Queues/Workers AI, execution engine
+  migrations/    0001_init.sql, 0002_agent_endpoint.sql, 0003_chat.sql
+  src/routes/    auth, workflows, executions, bots, credentials, integrations, agents, settings, chat
+  src/engine/    runner, executors, vault
+  src/integrations/ providers, zilliz, telegram, mcp, http
+web/             React + Vite PWA (Capacitor Android in web/android)
+  src/pages/     Dashboard, Workflows, WorkflowEditor, Chat, Bots, Integrations, Agents, Credentials, Executions, Settings
+  src/editor/    NodeCard, NodeLibrary, NodeConfigSheet
+  src/store/     app, workflow, chat
+  src/lib/       animations, node tests
+```
 
 ## Admin information
 
@@ -286,7 +344,3 @@ See [`.env.example`](.env.example) for the canonical list. Key variables:
 - **Email:** aung.thuyrain.at449@gmail.com
 - **Location:** Nay Pyi Taw, Myanmar
 - **TikTok:** https://www.tiktok.com/@amkyaw.dev1
-
----
-
-© AmkyawDev. FlowBot AI Studio is an original product and does not reproduce third-party branding or assets.
