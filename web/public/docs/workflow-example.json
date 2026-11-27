@@ -1,0 +1,74 @@
+{
+  "name": "Example workflow",
+  "graph": {
+    "nodes": [
+      {
+        "id": "n_trigger",
+        "type": "manualTrigger",
+        "position": {
+          "x": 0,
+          "y": 0
+        },
+        "data": {
+          "note": "start"
+        }
+      },
+      {
+        "id": "n_set",
+        "type": "set",
+        "position": {
+          "x": 220,
+          "y": 0
+        },
+        "data": {
+          "mapping": "{\"hello\":\"world\"}"
+        }
+      },
+      {
+        "id": "n_delay",
+        "type": "delay",
+        "position": {
+          "x": 440,
+          "y": 0
+        },
+        "data": {
+          "seconds": 1
+        }
+      },
+      {
+        "id": "n_set2",
+        "type": "set",
+        "position": {
+          "x": 660,
+          "y": 0
+        },
+        "data": {
+          "mapping": "{\"done\":true}"
+        }
+      }
+    ],
+    "edges": [
+      {
+        "id": "e1",
+        "source": "n_trigger",
+        "sourceHandle": "out",
+        "target": "n_set",
+        "targetHandle": "payload"
+      },
+      {
+        "id": "e2",
+        "source": "n_set",
+        "sourceHandle": "payload",
+        "target": "n_delay",
+        "targetHandle": "value"
+      },
+      {
+        "id": "e3",
+        "source": "n_delay",
+        "sourceHandle": "out",
+        "target": "n_set2",
+        "targetHandle": "payload"
+      }
+    ]
+  }
+}

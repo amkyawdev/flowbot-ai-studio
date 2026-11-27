@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import { workflowsApi } from '@/api/client';
 import { Empty, StatusBadge, Loading } from '@/components/ui';
+import { AiWorkflowBuilder } from '@/components/AiWorkflowBuilder';
 import { useApp } from '@/store/app';
 import { timeAgo } from '@flowbot/shared';
 
@@ -20,6 +21,7 @@ export function WorkflowsPage() {
   const toast = useApp((s) => s.toast);
   const [workflows, setWorkflows] = useState<any[] | null>(null);
   const [query, setQuery] = useState('');
+  const [aiOpen, setAiOpen] = useState(false);
 
   async function load() {
     try {
@@ -98,6 +100,7 @@ export function WorkflowsPage() {
           <h1>Workflows</h1>
           <p className="hint">Build, test, and ship automations on Cloudflare&apos;s edge.</p>
         </div>
+        <button className="btn" onClick={() => setAiOpen(true)}><Sparkles size={18} /> AI Assistant</button>
         <button className="btn btn-primary" onClick={createWorkflow}><Plus size={18} /> New workflow</button>
       </div>
 
@@ -106,6 +109,7 @@ export function WorkflowsPage() {
           <span className="badge badge-info"><Sparkles size={13} /> Studio</span>
           <h2>{list.length} workflow{list.length === 1 ? '' : 's'}</h2>
           <p className="small dim">Design node graphs, connect AI providers, and run them from anywhere.</p>
+          <button className="btn" style={{ marginTop: 10 }} onClick={() => setAiOpen(true)}><Sparkles size={16} /> Generate with AI</button>
         </div>
         <div className="wf-hero-stats">
           <div><Layers size={16} /><b>{totalNodes}</b><span>nodes</span></div>
@@ -171,6 +175,7 @@ export function WorkflowsPage() {
           </button>
         </div>
       )}
+      <AiWorkflowBuilder open={aiOpen} onClose={() => setAiOpen(false)} />
     </div>
   );
 }

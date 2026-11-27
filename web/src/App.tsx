@@ -8,7 +8,8 @@ import { LoginPage } from '@/pages/Login';
 import { DashboardPage } from '@/pages/Dashboard';
 import { WorkflowsPage } from '@/pages/Workflows';
 import { WorkflowEditorPage } from '@/pages/WorkflowEditor';
-import { ChatPage, PublicChatPage } from '@/pages/Chat';
+import { PublicChatPage } from '@/pages/Chat';
+import { DocsPage } from '@/pages/Docs';
 import { BotsPage } from '@/pages/Bots';
 import { IntegrationsPage } from '@/pages/Integrations';
 import { AgentsPage } from '@/pages/Agents';
@@ -30,8 +31,9 @@ export default function App() {
               <Route path="/" element={<DashboardPage />} />
               <Route path="/workflows" element={<WorkflowsPage />} />
                               <Route path="/workflows/:id" element={<WorkflowEditorPage />} />
-                <Route path="/chat" element={<ChatPage />} />
-                <Route path="/public-chat" element={<PublicChatPage />} />
+                <Route path="/chat" element={<PublicChatPage />} />
+                <Route path="/public-chat" element={<Navigate to="/chat" replace />} />
+                <Route path="/docs" element={<DocsPage />} />
               <Route path="/bots" element={<BotsPage />} />
               <Route path="/integrations" element={<IntegrationsPage />} />
               <Route path="/agents" element={<AgentsPage />} />

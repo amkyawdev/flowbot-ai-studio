@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 320" width="800" height="320" role="img" aria-label="bot illustration">
+<defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="#38bdf8"/></marker></defs>
+<rect width="800" height="320" fill="#0a0a0d"/>
+
+<text x="40" y="42" font-family="system-ui" font-size="20" font-weight="700" fill="#f4f6fb">Telegram bot flow</text>
+<text x="40" y="66" font-family="system-ui" font-size="13" fill="#9aa3b2">BotFather token → Bots → webhook → Telegram Trigger → AI reply.</text>
+<rect x="40" y="140" width="150" height="80" rx="14" fill="#111118" stroke="#22d3ee" stroke-width="1.5"/>
+<text x="115.0" y="176.0" text-anchor="middle" font-family="system-ui" font-size="15" font-weight="700" fill="#f4f6fb">@BotFather</text>
+<text x="115.0" y="198.0" text-anchor="middle" font-family="system-ui" font-size="12" fill="#9aa3b2">token</text>
+<rect x="240" y="140" width="150" height="80" rx="14" fill="#111118" stroke="#38bdf8" stroke-width="1.5"/>
+<text x="315.0" y="176.0" text-anchor="middle" font-family="system-ui" font-size="15" font-weight="700" fill="#f4f6fb">Bots page</text>
+<text x="315.0" y="198.0" text-anchor="middle" font-family="system-ui" font-size="12" fill="#9aa3b2">encrypted token</text>
+<rect x="440" y="140" width="150" height="80" rx="14" fill="#111118" stroke="#34d399" stroke-width="1.5"/>
+<text x="515.0" y="176.0" text-anchor="middle" font-family="system-ui" font-size="15" font-weight="700" fill="#f4f6fb">Webhook</text>
+<text x="515.0" y="198.0" text-anchor="middle" font-family="system-ui" font-size="12" fill="#9aa3b2">secret_token</text>
+<rect x="640" y="140" width="120" height="80" rx="14" fill="#111118" stroke="#fbbf24" stroke-width="1.5"/>
+<text x="700.0" y="176.0" text-anchor="middle" font-family="system-ui" font-size="15" font-weight="700" fill="#f4f6fb">Telegram</text>
+<text x="700.0" y="198.0" text-anchor="middle" font-family="system-ui" font-size="12" fill="#9aa3b2">trigger</text>
+<line x1="190" y1="180" x2="240" y2="180" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)"/><line x1="390" y1="180" x2="440" y2="180" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)"/><line x1="590" y1="180" x2="640" y2="180" stroke="#38bdf8" stroke-width="2" marker-end="url(#arrow)"/>
+
+</svg>
