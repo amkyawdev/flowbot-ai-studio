@@ -43,7 +43,7 @@ export interface ChatResult {
 /** Provider metadata used by the UI/API and connection tests. */
 export const PROVIDER_DEFAULTS: Record<string, { kind: 'openai' | 'gemini' | 'anthropic' | 'cloudflare'; baseUrl?: string; defaultModel: string; label: string }> = {
   openai: { kind: 'openai', baseUrl: 'https://api.openai.com/v1', defaultModel: 'gpt-4o-mini', label: 'OpenAI' },
-  groq: { kind: 'openai', baseUrl: 'https://api.groq.com/openai/v1', defaultModel: 'llama-3.1-8b-instant', label: 'Groq' },
+  groq: { kind: 'openai', baseUrl: 'https://api.groq.com/openai/v1', defaultModel: 'llama-3.3-70b-versatile', label: 'Groq' },
   openrouter: { kind: 'openai', baseUrl: 'https://openrouter.ai/api/v1', defaultModel: 'openai/gpt-4o-mini', label: 'OpenRouter' },
   'openai-compatible': { kind: 'openai', defaultModel: 'gpt-4o-mini', label: 'Custom OpenAI-compatible' },
   gemini: { kind: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', defaultModel: 'gemini-2.0-flash', label: 'Google Gemini' },
