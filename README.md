@@ -4,7 +4,7 @@
 
 **Mobile-first AI automation, chat, and Telegram Bot builder** — a no-code node editor plus an AI chat workspace, powered by Cloudflare Workers, D1, KV, Queues, Workers AI, and Zilliz Cloud.
 
-![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.1-34d399)
+![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.2-34d399)
 
 > **Developer:** Aung Myo Kyaw · **Brand:** AmkyawDev · **Email:** aung.thuyrain.at449@gmail.com · **Location:** Nay Pyi Taw, Myanmar · **TikTok:** https://www.tiktok.com/@amkyaw.dev1
 
@@ -12,7 +12,7 @@
 
 ## Contents
 
-- [What's new in v1.2.1](#whats-new-in-v121)
+- [What's new in v1.2.2](#whats-new-in-v122)
 - [Features](#features)
 - [Screens and routes](#screens-and-routes)
 - [Architecture](#architecture)
@@ -36,8 +36,10 @@
 
 ---
 
-## What's new in v1.2.1
+## What's new in v1.2.2
 
+- **Register page download** — “Download App” button and direct APK URL.
+- **Fixes** — Public Chat 500 (KV TTL) and bilingual README (English / မြန်မာ).
 - **AI Chat page** (`/chat`) with conversation history, search, rename, archive/delete, progressive text reveal, stop, regenerate, copy, system prompt, and provider/model selection.
 - **Public Chat** (`/public-chat`) for all signed-in users, with an active-user avatar strip (left-to-right marquee), presence heartbeat, and **automatic 24-hour message cleanup**.
 - **Email code authentication** — optional passwordless sign-in and registration verification with 6-digit email codes (Resend), hashed in D1 with 10-minute expiry and rate limits.
@@ -331,12 +333,12 @@ Optional signing secrets: `AMKYAW_KEYSTORE_BASE64`, `AMKYAW_KEYSTORE_PASSWORD`, 
 
 Pre-built artifacts publish to the **GitHub Releases** page.
 
-**Latest release — [v1.2.1](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.1):**
+**Latest release — [v1.2.2](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.2):**
 
 | Asset | Description | Link |
 |---|---|---|
-| `app-debug.apk` | Debug build (1.2.1) — installable on any Android device | [Download APK](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.1/app-debug.apk) |
-| `app-release.aab` | Release Android App Bundle (unsigned unless signing secrets are set) | [Download AAB](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.1/app-release.aab) |
+| `app-debug.apk` | Debug build (1.2.2) — installable on any Android device | [Download APK](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.2/app-debug.apk) |
+| `app-release.aab` | Release Android App Bundle (unsigned unless signing secrets are set) | [Download AAB](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.2/app-release.aab) |
 
 The debug APK is signed with Android's debug key, so it installs with *Unknown sources* enabled.
 
