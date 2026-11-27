@@ -8,6 +8,15 @@ compatibility_flags = ["nodejs_compat"]
 enabled = true
 
 # ---------------------------------------------------------------------------
+# SCOPING note: this repo is deployed per-account with the resources below.
+# Run `./scripts/provision-cloudflare.sh` (after `npx wrangler login`) to create
+# D1 / KV / R2 / Queues, write real IDs into this file, apply migrations, and
+# set the Worker secrets (CREDENTIAL_MASTER_KEY, AUTH_SESSION_SECRET,
+# ZILLIZ_ENDPOINT, ZILLIZ_API_KEY). Zilliz config is kept as Worker SECRETS,
+# so it is intentionally NOT declared in [vars] to avoid a vars/secret conflict.
+# ---------------------------------------------------------------------------
+
+# ---------------------------------------------------------------------------
 # Bindings. IDs are wired automatically when using `wrangler d1 create` /
 # `wrangler kv namespace create` / `wrangler r2 bucket create`.
 # Replace placeholders below with real IDs from your account.
