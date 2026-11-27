@@ -1,6 +1,25 @@
-// Default to same-origin (app + API on the same host). For local dev set
-// VITE_API_BASE_URL (e.g. http://localhost:8787) in web/.env.local.
-export const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || '';
+// Resolve the API base URL.
+//  - If VITE_API_BASE_URL is set at build time, use it.
+//  - Native (Capacitor Android/iOS) serves the app from https://localhost or
+//    capacitor://localhost where no API exists → point at the deployed Worker.
+//  - Web (served by the Worker itself) → same-origin ('') so /api works.
+export const PROD_API_URL = 'https://flowbot-ai-studio.amkyaw-dev.workers.dev';
+
+function resolveApiBase(): string {
+  const env = import.meta.env.VITE_API_BASE_URL as string | undefined;
+  if (env && env.trim() !== '') return env.replace(/\/+$/, '');
+  if (typeof window !== 'undefined') {
+    const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+    const isNative =
+      cap?.isNativePlatform?.() === true ||
+      window.location.protocol === 'capacitor:' ||
+      (window.location.hostname === 'localhost' && window.location.protocol === 'https:');
+    if (isNative) return PROD_API_URL;
+  }
+  return '';
+}
+
+export const API_BASE = resolveApiBase();
 
 export interface ApiError {
   status: number;
@@ -20,13 +39,19 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
   });
   let data: unknown = null;
-  try { data = await res.json(); } catch { /* no body */ }
+  let parsed = false;
+  try { data = await res.json(); parsed = true; } catch { /* not JSON */ }
   if (!res.ok) {
     const err = (data as ApiError) || {};
     const e = new Error(err.error || `Request failed (${res.status})`) as Error & { status?: number; issues?: unknown[] };
     e.status = res.status;
     e.issues = err.issues;
     throw e;
+  }
+  if (!parsed) {
+    // A 200 with a non-JSON body usually means the API host is wrong (the
+    // WebView served index.html instead of JSON). Surface a clear error.
+    throw new Error('Unexpected response from server. Please check your connection.');
   }
   return data as T;
 }

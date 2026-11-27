@@ -46,6 +46,9 @@ export const useApp = create<AppState>((set, get) => ({
 
   async login(email, password) {
     const res = await authApi.login({ email, password });
+    if (!res || typeof res !== 'object' || !res.token) {
+      throw new Error('Login failed: no token returned. Check your connection.');
+    }
     localStorage.setItem('flowbot_token', res.token);
     set({ token: res.token, user: res.user });
   },
