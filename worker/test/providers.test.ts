@@ -1,5 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
-import { chatCompletion, resolveProvider } from '../src/integrations/providers';
+import { chatCompletion, resolveProvider, authHeadersFor } from '../src/integrations/providers';
 
 describe('provider resolution', () => {
   it('maps groq and openrouter to OpenAI-compatible defaults', () => {
@@ -17,6 +17,28 @@ describe('provider resolution', () => {
 
   it('throws for unknown providers', () => {
     expect(() => resolveProvider('nope')).toThrow(/Unsupported provider/);
+  });
+
+  it('supports DeepSeek, MiniMax and Experiential Labs', () => {
+    expect(resolveProvider('deepseek').baseUrl).toContain('deepseek.com');
+    expect(resolveProvider('minimax').baseUrl).toContain('minimax.io');
+    expect(resolveProvider('experiential-labs').kind).toBe('openai');
+  });
+});
+
+describe('provider auth headers', () => {
+  it('uses Bearer auth for OpenAI-compatible providers', () => {
+    expect(authHeadersFor('minimax', { apiKey: 'k' }).Authorization).toBe('Bearer k');
+    expect(authHeadersFor('deepseek', { apiKey: 'k' }).Authorization).toBe('Bearer k');
+  });
+
+  it('uses xi-api-key for ElevenLabs', () => {
+    expect(authHeadersFor('elevenlabs', { apiKey: 'k' })['xi-api-key']).toBe('k');
+  });
+
+  it('honours a custom auth header and scheme', () => {
+    const headers = authHeadersFor('elevenlabs', { apiKey: 'k', authHeader: 'X-Key', authScheme: '' });
+    expect(headers['X-Key']).toBe('k');
   });
 });
 

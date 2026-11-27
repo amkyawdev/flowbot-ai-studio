@@ -10,6 +10,9 @@ export type ProviderId =
   | 'openai-compatible'
   | 'groq'
   | 'openrouter'
+  | 'deepseek'
+  | 'minimax'
+  | 'experiential-labs'
   | 'gemini'
   | 'anthropic'
   | 'cloudflare';
@@ -31,6 +34,9 @@ export interface ChatRequest {
   responseFormat?: 'text' | 'json';
   /** Extra headers (server-side only; never log these). */
   headers?: Record<string, string>;
+  /** Auth header name/scheme (e.g. Authorization/Bearer, xi-api-key/none). */
+  authHeader?: string;
+  authScheme?: string;
   /** Cloudflare Workers AI binding, required for provider 'cloudflare'. */
   ai?: WorkersAI;
 }
@@ -41,15 +47,54 @@ export interface ChatResult {
 }
 
 /** Provider metadata used by the UI/API and connection tests. */
-export const PROVIDER_DEFAULTS: Record<string, { kind: 'openai' | 'gemini' | 'anthropic' | 'cloudflare'; baseUrl?: string; defaultModel: string; label: string }> = {
-  openai: { kind: 'openai', baseUrl: 'https://api.openai.com/v1', defaultModel: 'gpt-4o-mini', label: 'OpenAI' },
-  groq: { kind: 'openai', baseUrl: 'https://api.groq.com/openai/v1', defaultModel: 'llama-3.3-70b-versatile', label: 'Groq' },
-  openrouter: { kind: 'openai', baseUrl: 'https://openrouter.ai/api/v1', defaultModel: 'openai/gpt-4o-mini', label: 'OpenRouter' },
-  'openai-compatible': { kind: 'openai', defaultModel: 'gpt-4o-mini', label: 'Custom OpenAI-compatible' },
-  gemini: { kind: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', defaultModel: 'gemini-2.0-flash', label: 'Google Gemini' },
-  anthropic: { kind: 'anthropic', baseUrl: 'https://api.anthropic.com/v1', defaultModel: 'claude-3-5-haiku-latest', label: 'Anthropic' },
-  cloudflare: { kind: 'cloudflare', defaultModel: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', label: 'Cloudflare Workers AI' },
+export const PROVIDER_DEFAULTS: Record<string, {
+  kind: 'openai' | 'gemini' | 'anthropic' | 'cloudflare';
+  baseUrl?: string;
+  defaultModel: string;
+  label: string;
+  authHeader?: string;
+  authScheme?: string;
+  requiresBaseUrl?: boolean;
+}> = {
+  openai: { kind: 'openai', baseUrl: 'https://api.openai.com/v1', defaultModel: 'gpt-4o-mini', label: 'OpenAI', authHeader: 'Authorization', authScheme: 'Bearer' },
+  groq: { kind: 'openai', baseUrl: 'https://api.groq.com/openai/v1', defaultModel: 'llama-3.3-70b-versatile', label: 'Groq', authHeader: 'Authorization', authScheme: 'Bearer' },
+  openrouter: { kind: 'openai', baseUrl: 'https://openrouter.ai/api/v1', defaultModel: 'openai/gpt-4o-mini', label: 'OpenRouter', authHeader: 'Authorization', authScheme: 'Bearer' },
+  'openai-compatible': { kind: 'openai', defaultModel: 'gpt-4o-mini', label: 'Custom OpenAI-compatible', authHeader: 'Authorization', authScheme: 'Bearer', requiresBaseUrl: true },
+  deepseek: { kind: 'openai', baseUrl: 'https://api.deepseek.com/v1', defaultModel: 'deepseek-chat', label: 'DeepSeek', authHeader: 'Authorization', authScheme: 'Bearer' },
+  minimax: { kind: 'openai', baseUrl: 'https://api.minimax.io/v1', defaultModel: 'MiniMax-M2.1', label: 'MiniMax', authHeader: 'Authorization', authScheme: 'Bearer' },
+  'experiential-labs': { kind: 'openai', defaultModel: 'gpt-4o-mini', label: 'Experiential Labs (custom)', authHeader: 'Authorization', authScheme: 'Bearer', requiresBaseUrl: true },
+  gemini: { kind: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', defaultModel: 'gemini-2.0-flash', label: 'Google Gemini', authHeader: 'x-goog-api-key', authScheme: '' },
+  anthropic: { kind: 'anthropic', baseUrl: 'https://api.anthropic.com/v1', defaultModel: 'claude-3-5-haiku-latest', label: 'Anthropic', authHeader: 'x-api-key', authScheme: '' },
+  cloudflare: { kind: 'cloudflare', defaultModel: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', label: 'Cloudflare Workers AI', authHeader: 'Authorization', authScheme: 'Bearer' },
 };
+
+/** Non-chat providers (voice/media APIs) used by the credential vault + HTTP Request node. */
+export const NON_CHAT_PROVIDER_DEFAULTS: Record<string, {
+  baseUrl: string;
+  defaultModel: string;
+  label: string;
+  authHeader: string;
+  authScheme: string;
+}> = {
+  elevenlabs: { baseUrl: 'https://api.elevenlabs.io/v1', defaultModel: 'eleven_multilingual_v2', label: 'ElevenLabs', authHeader: 'xi-api-key', authScheme: '' },
+};
+
+/** Build auth headers for a stored credential (server-side only). */
+export function authHeadersFor(provider: string, cred: Record<string, string>): Record<string, string> {
+  const meta = PROVIDER_DEFAULTS[provider] || NON_CHAT_PROVIDER_DEFAULTS[provider];
+  const header = cred.authHeader || meta?.authHeader || 'Authorization';
+  const scheme = cred.authScheme ?? meta?.authScheme ?? 'Bearer';
+  const key = cred.apiKey || cred.token || '';
+  const headers: Record<string, string> = {};
+  if (key) headers[header] = scheme ? `${scheme} ${key}` : key;
+  if (cred.headers) {
+    try {
+      const extra = JSON.parse(cred.headers) as Record<string, unknown>;
+      for (const [k, v] of Object.entries(extra)) headers[k] = String(v);
+    } catch { /* ignore malformed headers */ }
+  }
+  return headers;
+}
 
 export function resolveProvider(provider: string): { kind: 'openai' | 'gemini' | 'anthropic' | 'cloudflare'; baseUrl?: string; defaultModel: string } {
   const meta = PROVIDER_DEFAULTS[provider];
@@ -74,7 +119,13 @@ async function openaiCompat(req: ChatRequest, defaultBase?: string): Promise<Cha
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${req.apiKey ?? ''}`,
+      ...(req.apiKey
+        ? {
+            [req.authHeader || 'Authorization']: (req.authScheme ?? 'Bearer')
+              ? `${req.authScheme ?? 'Bearer'} ${req.apiKey}`
+              : req.apiKey,
+          }
+        : {}),
       ...(req.headers ?? {}),
     },
     body: JSON.stringify({

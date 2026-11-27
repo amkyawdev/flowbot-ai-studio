@@ -224,7 +224,11 @@ Provider adapters live in `worker/src/integrations/providers.ts` and support:
 
 - **OpenAI** (`https://api.openai.com/v1`)
 - **Groq** (`https://api.groq.com/openai/v1`)
-- **OpenRouter** (`https://openrouter.ai/api/v1`)
+- **OpenRouter** (`https://openrouter.ai/api/v1`, including free `:free` models)
+- **DeepSeek** (`https://api.deepseek.com/v1`) — `deepseek-chat`, `deepseek-reasoner`
+- **MiniMax** (`https://api.minimax.io/v1`) — `MiniMax-M2.1`, `MiniMax-Text-01`
+- **ElevenLabs** (`https://api.elevenlabs.io/v1`, `xi-api-key`) — voice API; call it from the HTTP Request node with the credential
+- **Experiential Labs** (custom Base URL) — Bearer auth
 - **Custom OpenAI-compatible** (requires a Base URL)
 - **Google Gemini**
 - **Anthropic**

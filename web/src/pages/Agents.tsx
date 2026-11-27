@@ -3,13 +3,18 @@ import { BotMessageSquare, Plus, Trash2, Wand2 } from 'lucide-react';
 import { agentsApi, credentialsApi } from '@/api/client';
 import { Empty, Sheet, Loading } from '@/components/ui';
 import { useApp } from '@/store/app';
+import { modelsFor } from '@/lib/models';
 
 const providers = [
-  { value: 'openai', label: 'OpenAI-compatible', models: ['gpt-4o-mini', 'gpt-4o', 'gpt-4o-mini-2024-07-18'] },
-  { value: 'groq', label: 'Groq', models: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'] },
-  { value: 'openrouter', label: 'OpenRouter', models: ['openai/gpt-4o-mini', 'anthropic/claude-3.5-sonnet'] },
-  { value: 'gemini', label: 'Google Gemini', models: ['gemini-2.0-flash', 'gemini-1.5-pro'] },
-  { value: 'anthropic', label: 'Anthropic', models: ['claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest'] },
+  { value: 'openai', label: 'OpenAI-compatible', models: modelsFor('openai') },
+  { value: 'groq', label: 'Groq', models: modelsFor('groq') },
+  { value: 'openrouter', label: 'OpenRouter (free models)', models: modelsFor('openrouter') },
+  { value: 'deepseek', label: 'DeepSeek', models: modelsFor('deepseek') },
+  { value: 'minimax', label: 'MiniMax', models: modelsFor('minimax') },
+  { value: 'experiential-labs', label: 'Experiential Labs', models: modelsFor('experiential-labs') },
+  { value: 'cloudflare', label: 'Cloudflare Workers AI', models: modelsFor('cloudflare') },
+  { value: 'gemini', label: 'Google Gemini', models: modelsFor('gemini') },
+  { value: 'anthropic', label: 'Anthropic', models: modelsFor('anthropic') },
 ];
 
 export function AgentsPage() {

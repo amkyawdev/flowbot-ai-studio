@@ -224,7 +224,11 @@ Provider adapter များသည် `worker/src/integrations/providers.ts` �
 
 - **OpenAI** (`https://api.openai.com/v1`)
 - **Groq** (`https://api.groq.com/openai/v1`)
-- **OpenRouter** (`https://openrouter.ai/api/v1`)
+- **OpenRouter** (`https://openrouter.ai/api/v1`, free `:free` models အပါ)
+- **DeepSeek** (`https://api.deepseek.com/v1`) — `deepseek-chat`, `deepseek-reasoner`
+- **MiniMax** (`https://api.minimax.io/v1`) — `MiniMax-M2.1`, `MiniMax-Text-01`
+- **ElevenLabs** (`https://api.elevenlabs.io/v1`, `xi-api-key`) — voice API; HTTP Request node တွင် credential ဖြင့် ခေါ်ပါ
+- **Experiential Labs** (custom Base URL) — Bearer auth
 - **Custom OpenAI-compatible** (Base URL လိုအပ်)
 - **Google Gemini**
 - **Anthropic**

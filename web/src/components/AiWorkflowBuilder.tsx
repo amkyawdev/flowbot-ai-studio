@@ -7,6 +7,7 @@ import { useApp } from '@/store/app';
 import { chatApi, workflowsApi } from '@/api/client';
 import type { ChatConfig } from '@/api/client';
 import { NODE_REGISTRY, validateGraph } from '@flowbot/shared';
+import { modelsFor } from '@/lib/models';
 
 function parseWorkflowJson(text: string): { name?: string; graph: any } {
   const cleaned = text.replace(/```json/gi, '```').replace(/```/g, '').trim();
@@ -170,7 +171,10 @@ Rules: exactly one trigger; use real handle ids from the node definitions; conne
             </div>
             <div className="field">
               <label>Model</label>
-              <input className="input" value={model} onChange={(e) => setModel(e.target.value)} aria-label="Model" />
+              <input className="input" list="ai-wf-models" value={model} onChange={(e) => setModel(e.target.value)} aria-label="Model" />
+              <datalist id="ai-wf-models">
+                {modelsFor(provider).map((m) => <option key={m} value={m} />)}
+              </datalist>
             </div>
           </div>
           {providerCreds.length > 0 && (

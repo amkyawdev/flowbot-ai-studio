@@ -2,7 +2,7 @@ import type { FlowNode } from '@flowbot/shared';
 import { renderTemplate, getPath, setPath } from '@flowbot/shared';
 import type { NodeExecutionContext, NodeExecutor, NodeExecutorResult } from '../types';
 import { httpRequest } from '../integrations/http';
-import { chatCompletion, embedTexts, resolveProvider } from '../integrations/providers';
+import { chatCompletion, embedTexts, resolveProvider, authHeadersFor } from '../integrations/providers';
 import type { ProviderId } from '../integrations/providers';
 import { TelegramClient } from '../integrations/telegram';
 import * as zilliz from '../integrations/zilliz';
@@ -121,6 +121,8 @@ export const executors: Record<string, NodeExecutor> = {
         baseUrl: agentBaseUrl || credential.baseUrl || undefined,
         model: String(agent.model || '') || resolveProvider(agentProvider).defaultModel,
         headers: credentialHeaders(credential),
+        authHeader: credential.authHeader,
+        authScheme: credential.authScheme,
         ai: ctx.env.AI,
         messages: [
           { role: 'system', content: String(agent.system_prompt || '') },
@@ -149,6 +151,8 @@ export const executors: Record<string, NodeExecutor> = {
         apiKey: cred.apiKey || cred.token || '',
         model: String(cfg.model || '') || 'gpt-4o-mini',
         headers: credentialHeaders(cred),
+        authHeader: cred.authHeader,
+        authScheme: cred.authScheme,
         ai: ctx.env.AI,
         messages,
         temperature: Number(cfg.temperature ?? 0.7),
@@ -173,6 +177,8 @@ export const executors: Record<string, NodeExecutor> = {
         apiKey: cred.apiKey || cred.token || '',
         model: String(cfg.model || 'gemini-2.0-flash'),
         headers: credentialHeaders(cred),
+        authHeader: cred.authHeader,
+        authScheme: cred.authScheme,
         ai: ctx.env.AI,
         messages,
         temperature: Number(cfg.temperature ?? 0.7),
@@ -206,7 +212,9 @@ export const executors: Record<string, NodeExecutor> = {
       const cfg = node.data;
       const url = await resolveString(ctx, node, cfg.url, ctx.output('url'));
       if (!url) throw new Error('HTTP Request: no URL');
-      const headers = parseJsonish(renderTemplate(String(cfg.headers || '{}'), buildCtx(ctx, node)));
+      const cred = cfg.credential ? await ctx.vault.get(String(cfg.credential)) : {};
+      const authHeaders = cfg.credential ? authHeadersFor(String(cred.provider || ''), cred) : {};
+      const headers = { ...authHeaders, ...parseJsonish(renderTemplate(String(cfg.headers || '{}'), buildCtx(ctx, node))) };
       let body: unknown;
       const bodyMode = String(cfg.body || 'none');
       if (cfg.bodyText && cfg.bodyText !== '') {

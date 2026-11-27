@@ -5,14 +5,28 @@ import { Empty, Sheet, Loading } from '@/components/ui';
 import { Combobox } from '@/components/Combobox';
 import { useApp } from '@/store/app';
 
-const PROVIDERS = [
-  { value: 'openai', label: 'OpenAI', fields: ['apiKey', 'baseUrl', 'headers'] },
-  { value: 'groq', label: 'Groq', fields: ['apiKey', 'headers'] },
-  { value: 'openrouter', label: 'OpenRouter', fields: ['apiKey', 'baseUrl', 'headers'] },
-  { value: 'gemini', label: 'Google Gemini', fields: ['apiKey', 'headers'] },
-  { value: 'anthropic', label: 'Anthropic', fields: ['apiKey', 'baseUrl', 'headers'] },
-  { value: 'openai-compatible', label: 'Custom OpenAI-compatible', fields: ['apiKey', 'baseUrl', 'model', 'headers'] },
-  { value: 'telegram', label: 'Telegram (bot token)', fields: ['token'] },
+interface ProviderPreset {
+  value: string;
+  label: string;
+  fields: string[];
+  endpoint: string;
+  authHeader: string;
+  authScheme: string;
+  defaults?: Record<string, string>;
+}
+
+const PROVIDERS: ProviderPreset[] = [
+  { value: 'openai', label: 'OpenAI', fields: ['apiKey', 'baseUrl', 'headers'], endpoint: 'https://api.openai.com/v1', authHeader: 'Authorization', authScheme: 'Bearer' },
+  { value: 'groq', label: 'Groq', fields: ['apiKey', 'headers'], endpoint: 'https://api.groq.com/openai/v1', authHeader: 'Authorization', authScheme: 'Bearer' },
+  { value: 'openrouter', label: 'OpenRouter (free models)', fields: ['apiKey', 'baseUrl', 'headers'], endpoint: 'https://openrouter.ai/api/v1', authHeader: 'Authorization', authScheme: 'Bearer' },
+  { value: 'deepseek', label: 'DeepSeek', fields: ['apiKey', 'baseUrl', 'headers'], endpoint: 'https://api.deepseek.com/v1', authHeader: 'Authorization', authScheme: 'Bearer', defaults: { baseUrl: 'https://api.deepseek.com/v1' } },
+  { value: 'minimax', label: 'MiniMax', fields: ['apiKey', 'baseUrl', 'headers'], endpoint: 'https://api.minimax.io/v1', authHeader: 'Authorization', authScheme: 'Bearer', defaults: { baseUrl: 'https://api.minimax.io/v1' } },
+  { value: 'elevenlabs', label: 'ElevenLabs (voice)', fields: ['apiKey', 'baseUrl', 'headers'], endpoint: 'https://api.elevenlabs.io/v1', authHeader: 'xi-api-key', authScheme: '', defaults: { baseUrl: 'https://api.elevenlabs.io/v1' } },
+  { value: 'experiential-labs', label: 'Experiential Labs (custom)', fields: ['apiKey', 'baseUrl', 'authHeader', 'authScheme', 'headers', 'model'], endpoint: 'Set Base URL', authHeader: 'Authorization', authScheme: 'Bearer', defaults: { authHeader: 'Authorization', authScheme: 'Bearer' } },
+  { value: 'gemini', label: 'Google Gemini', fields: ['apiKey', 'headers'], endpoint: 'https://generativelanguage.googleapis.com/v1beta', authHeader: 'x-goog-api-key', authScheme: '' },
+  { value: 'anthropic', label: 'Anthropic', fields: ['apiKey', 'baseUrl', 'headers'], endpoint: 'https://api.anthropic.com/v1', authHeader: 'x-api-key', authScheme: '' },
+  { value: 'openai-compatible', label: 'Custom OpenAI-compatible', fields: ['apiKey', 'baseUrl', 'model', 'headers'], endpoint: 'Set Base URL', authHeader: 'Authorization', authScheme: 'Bearer' },
+  { value: 'telegram', label: 'Telegram (bot token)', fields: ['token'], endpoint: 'https://api.telegram.org', authHeader: 'token', authScheme: '' },
 ];
 
 export function CredentialsPage() {
@@ -81,17 +95,17 @@ export function CredentialsPage() {
 
 function CreateCredentialSheet({ open, onClose, onSave }: { open: boolean; onClose: () => void; onSave: (b: any) => Promise<void> }) {
   const toast = useApp((s) => s.toast);
-  const [provider, setProvider] = useState(PROVIDERS[0]);
+  const [provider, setProvider] = useState<ProviderPreset>(PROVIDERS[0]);
   const [name, setName] = useState('');
   const [values, setValues] = useState<Record<string, string>>({ apiKey: '' });
   const [show, setShow] = useState(false);
 
   function setField(k: string, v: string) { setValues((d) => ({ ...d, [k]: v })); }
 
-  function changeProvider(p: typeof PROVIDERS[0]) {
+  function changeProvider(p: ProviderPreset) {
     setProvider(p);
     const next: Record<string, string> = {};
-    p.fields.forEach((f) => { next[f] = ''; });
+    p.fields.forEach((f) => { next[f] = p.defaults?.[f] ?? ''; });
     setValues(next);
     setName((n) => n || p.label);
   }
@@ -119,6 +133,12 @@ function CreateCredentialSheet({ open, onClose, onSave }: { open: boolean; onClo
           ariaLabel="Provider"
         />
       </div>
+      <div className="hint" style={{ marginTop: 6 }}>
+        Endpoint: {values.baseUrl || provider.endpoint} · Auth: {values.authHeader || provider.authHeader}{provider.authScheme ? ` ${provider.authScheme}` : ''}
+      </div>
+      {provider.value === 'elevenlabs' && (
+        <div className="hint">Voice API — call it from the HTTP Request node with this credential.</div>
+      )}
       <div className="field"><label htmlFor="cred-name">Name</label><input id="cred-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder={provider.label} /></div>
       {provider.fields.map((f) => (
         <div className="field" key={f}>
@@ -138,7 +158,7 @@ function CreateCredentialSheet({ open, onClose, onSave }: { open: boolean; onClo
                 id={`cred-${f}`}
                 className="input mono"
                 style={{ flex: 1 }}
-                type={show ? 'text' : 'password'}
+                type={['apiKey', 'token', 'secret'].includes(f) && !show ? 'password' : 'text'}
                 value={values[f] ?? ''}
                 onChange={(e) => setField(f, e.target.value)}
               />
@@ -146,6 +166,8 @@ function CreateCredentialSheet({ open, onClose, onSave }: { open: boolean; onClo
             </div>
           )}
           {f === 'baseUrl' && <div className="hint">Leave blank for the default endpoint.</div>}
+          {f === 'authHeader' && <div className="hint">Header name, e.g. Authorization or xi-api-key.</div>}
+          {f === 'authScheme' && <div className="hint">Prefix, e.g. Bearer; leave blank for a raw key.</div>}
           {f === 'headers' && <div className="hint">Optional JSON headers, stored encrypted and sent server-side only.</div>}
           {f === 'model' && <div className="hint">Default model id for this credential (optional).</div>}
         </div>

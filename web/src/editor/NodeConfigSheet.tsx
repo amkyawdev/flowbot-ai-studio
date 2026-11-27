@@ -7,8 +7,9 @@ import { Combobox, type ComboOption } from '@/components/Combobox';
 import { useWorkflow } from '@/store/workflow';
 import { useApp } from '@/store/app';
 import { credentialsApi, botsApi, agentsApi } from '@/api/client';
+import { modelsFor } from '@/lib/models';
 
-const AI_PROVIDERS = ['openai', 'groq', 'openrouter', 'anthropic', 'gemini', 'openai-compatible', 'cloudflare'];
+const AI_PROVIDERS = ['openai', 'groq', 'openrouter', 'anthropic', 'gemini', 'openai-compatible', 'cloudflare', 'deepseek', 'minimax', 'experiential-labs'];
 const AI_NODES = ['openaiChat', 'gemini', 'cloudflareAI', 'aiAgent'];
 
 export function NodeConfigSheet({ node }: { node: Node | null }) {
@@ -49,7 +50,9 @@ export function NodeConfigSheet({ node }: { node: Node | null }) {
     if (field.type === 'credential') {
       const pool = AI_NODES.includes(nodeType)
         ? credentialList.filter((c) => AI_PROVIDERS.includes(c.provider))
-        : credentialList;
+        : nodeType === 'httpRequest'
+          ? credentialList.filter((c) => c.provider !== 'telegram')
+          : credentialList;
       return pool.map((c) => ({ value: c.id, label: `${c.name} (${c.provider})` }));
     }
     return undefined;
@@ -60,6 +63,8 @@ export function NodeConfigSheet({ node }: { node: Node | null }) {
   if (!node || !def) return null;
   const activeNode = node;
   const definition = def;
+  const credentialProvider = credentialList.find((c) => c.id === String(draft.credential || ''))?.provider;
+  const modelSuggestions = modelsFor(credentialProvider || (nodeType === 'openaiChat' ? 'openai-compatible' : nodeType));
 
   const set = (key: string, value: unknown) => {
     setDraft((d) => ({ ...d, [key]: value }));
@@ -153,6 +158,14 @@ export function NodeConfigSheet({ node }: { node: Node | null }) {
                 <input type="checkbox" checked={Boolean(value)} onChange={(e) => set(field.key, e.target.checked)} style={{ width: 20, height: 20 }} />
                 <span className="small">{field.help || 'Enabled'}</span>
               </label>
+            ) : field.key === 'model' ? (
+              <>
+                <input id={id} className="input" list={`${id}-models`} value={String(value)} placeholder={field.placeholder}
+                  onChange={(e) => set(field.key, e.target.value)} />
+                <datalist id={`${id}-models`}>
+                  {modelSuggestions.map((m) => <option key={m} value={m} />)}
+                </datalist>
+              </>
             ) : (
               <input id={id} className="input" value={String(value)} placeholder={field.placeholder}
                 onChange={(e) => set(field.key, e.target.value)} />

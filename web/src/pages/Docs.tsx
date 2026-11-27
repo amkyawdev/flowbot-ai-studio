@@ -156,16 +156,19 @@ const SECTIONS: DocSection[] = [
     id: 'api',
     title: 'API ထည့်နည်း (Credentials)',
     icon: KeyRound,
-    keywords: 'api key credential base url headers model test openai groq openrouter gemini anthropic cloudflare zilliz',
-    text: 'api key credential base url headers model test openai groq openrouter gemini anthropic cloudflare workers ai zilliz',
+    keywords: 'api key credential base url headers model test openai groq openrouter deepseek minimax elevenlabs experiential free cloudflare zilliz',
+    text: 'api key credential base url headers model test openai groq openrouter deepseek minimax elevenlabs experiential labs free cloudflare workers ai zilliz',
     body: (
       <>
         <Figure src="/docs/api.svg" alt="API credentials" caption="API key + Base URL + headers ကို encrypted vault တွင် သိမ်းသည်။" />
         <Step n={1} title="Credentials → Add"><b>Credentials</b> သို့ သွားပြီး <b>Add</b> ကို နှိပ်ပါ။</Step>
-        <Step n={2} title="Provider ရွေးပါ">OpenAI, Groq, OpenRouter, Gemini, Anthropic, Custom OpenAI-compatible, Telegram များထဲမှ ရွေးပါ။</Step>
+        <Step n={2} title="Provider ရွေးပါ">OpenAI, Groq, OpenRouter, DeepSeek, MiniMax, ElevenLabs, Experiential Labs, Gemini, Anthropic, Custom OpenAI-compatible, Telegram များထဲမှ ရွေးပါ။</Step>
         <Step n={3} title="API key / Base URL / Headers">API key ထည့်ပါ။ ကိုယ်ပိုင် endpoint အတွက် Base URL ထည့်ပါ။ လိုအပ်ပါက custom headers (JSON) ထည့်ပါ။</Step>
         <Step n={4} title="Test လုပ်ပါ">List ထဲရှိ <b>Test</b> ကို နှိပ်ပြီး server-side မှ ချိတ်ဆက်မှုကို စစ်ပါ။</Step>
         <div className="docs-callout">Cloudflare Workers AI အတွက် API key မလိုပါ — server-side <code>env.AI</code> binding ကို သုံးသည်။ Zilliz အတွက် <code>ZILLIZ_ENDPOINT</code> နှင့် <code>ZILLIZ_API_KEY</code> ကို Worker secrets အဖြစ် သတ်မှတ်ပါ။</div>
+        <div className="docs-callout">
+          <b>Provider endpoints &amp; auth:</b> DeepSeek <code>https://api.deepseek.com/v1</code> (Authorization: Bearer) · MiniMax <code>https://api.minimax.io/v1</code> (Bearer) · ElevenLabs <code>https://api.elevenlabs.io/v1</code> (<code>xi-api-key</code>) · Experiential Labs (custom Base URL, Bearer). OpenRouter တွင် free <code>:free</code> models ရှိပြီး Groq/Gemini/Cloudflare Workers AI တွင်လည်း free tier ရှိသည်။ ElevenLabs ကို HTTP Request node တွင် credential ဖြင့် ခေါ်နိုင်သည်။
+        </div>
       </>
     ),
   },

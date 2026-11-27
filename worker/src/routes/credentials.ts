@@ -42,7 +42,8 @@ credentialRoutes.post('/credentials', async (c) => {
   if (!name || !provider) return jsonResponse({ error: 'name and provider are required' }, 400);
 
   const resolver = makeCredentialResolver(c.env, app.workspace.id);
-  const dataEnc = await resolver.encrypt(Object.fromEntries(Object.entries(data).map(([k, v]) => [k, String(v)])));
+  const payload = { ...data, provider };
+  const dataEnc = await resolver.encrypt(Object.fromEntries(Object.entries(payload).map(([k, v]) => [k, String(v)])));
   const id = `cr_${randomId()}`;
   await c.env.DB.prepare(
     'INSERT INTO credentials (id, workspace_id, name, provider, data_enc, meta_json) VALUES (?, ?, ?, ?, ?, ?)',
@@ -100,6 +101,11 @@ credentialRoutes.post('/credentials/:id/test', async (c) => {
       const res = await testConnection({ endpoint: data.endpoint, token: data.token || data.apiKey });
       ok = res.ok;
       message = res.ok ? `Connected to Zilliz (${res.collections?.length ?? 0} collections)` : (res.message || 'Failed');
+    } else if (row.provider === 'elevenlabs') {
+      const { listVoices } = await import('../integrations/elevenlabs');
+      const res = await listVoices(data.apiKey || data.token || '', data.baseUrl || undefined);
+      ok = res.ok;
+      message = `Connected — ${res.count} voices`;
     } else if (PROVIDER_DEFAULTS[row.provider]) {
       const meta = resolveProvider(row.provider);
       const customHeaders = parseJsonSafe<Record<string, string>>(data.headers || '{}', {});
@@ -111,6 +117,8 @@ credentialRoutes.post('/credentials/:id/test', async (c) => {
         messages: [{ role: 'user', content: 'ping' }],
         maxTokens: 1,
         headers: customHeaders,
+        authHeader: data.authHeader,
+        authScheme: data.authScheme,
         ai: c.env.AI,
       });
       ok = true;
