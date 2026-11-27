@@ -104,9 +104,12 @@ export function NodeConfigSheet({ node }: { node: Node | null }) {
 
   return (
     <Sheet open={!!node} onClose={close} title={definition.name}>
-      <div className="flex gap-8 mb-8">
-        <span className="badge badge-info">{definition.category}</span>
-        <span className="small dim">{definition.description}</span>
+      <div className="node-config-head">
+        <div className="node-config-head-top">
+          <span className="badge badge-info">{definition.category}</span>
+          <span className="small node-config-name">{definition.name}</span>
+        </div>
+        <p className="small dim node-config-desc">{definition.description}</p>
       </div>
       {loadingLists && <div className="hint" style={{ marginBottom: 8 }}>Loading options…</div>}
       {definition.config.map((field) => {

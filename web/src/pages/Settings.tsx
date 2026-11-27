@@ -8,13 +8,12 @@ export function SettingsPage() {
   const toast = useApp((s) => s.toast);
   const user = useApp((s) => s.user);
   const [about, setAbout] = useState<any>(null);
-  const [config, setConfig] = useState<Record<string, unknown>>({});
   const [runtime, setRuntime] = useState<any>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     Promise.all([settingsApi.about(), settingsApi.get()])
-      .then(([a, s]) => { setAbout(a); setConfig(s.settings); setRuntime(s.runtime ?? null); setLoaded(true); })
+      .then(([a, s]) => { setAbout(a); setRuntime(s.runtime ?? null); setLoaded(true); })
       .catch((e) => { toast(e.message, 'error'); setLoaded(true); });
   }, []);
 

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard, Workflow, Bot, Puzzle, BotMessageSquare, KeyRound, History,
-  Settings, Workflow as WorkflowIcon, LogOut, UserRound, MoreHorizontal,
+  Settings, Workflow as WorkflowIcon, LogOut, UserRound, MoreHorizontal, Globe,
 } from 'lucide-react';
 import { useApp } from '@/store/app';
 import { Sheet } from '@/components/ui';
@@ -11,6 +11,7 @@ const items = [
   { to: '/', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/workflows', label: 'Workflows', icon: Workflow },
   { to: '/chat', label: 'Chat', icon: BotMessageSquare },
+  { to: '/public-chat', label: 'Public Chat', icon: Globe },
   { to: '/bots', label: 'Bots', icon: Bot },
   { to: '/integrations', label: 'Integrations', icon: Puzzle },
   { to: '/agents', label: 'AI Agents', icon: BotMessageSquare },

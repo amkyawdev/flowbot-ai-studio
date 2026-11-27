@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, BackgroundVariant,
+  ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, BackgroundVariant, ConnectionLineType,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import {
@@ -138,7 +138,7 @@ export function WorkflowEditorPage() {
         </button>
         <input
           className="input"
-          style={{ flex: 1, minHeight: 40, background: 'transparent', border: 'none', minWidth: 100 }}
+          style={{ flex: 1, minHeight: 46, background: 'transparent', border: 'none', minWidth: 100 }}
           value={store.name}
           onChange={(e) => store.setName(e.target.value)}
           aria-label="Workflow name"
@@ -148,8 +148,8 @@ export function WorkflowEditorPage() {
         <button className="btn-icon btn-ghost" onClick={() => void useWorkflow.getState().save()} aria-label="Save" title={store.savedAt ? `Saved ${new Date(store.savedAt).toLocaleTimeString()}` : 'Save'}>
           {store.saving ? <span className="spinner" style={{ width: 16, height: 16 }} /> : <Save size={19} />}
         </button>
-        <button className="btn btn-primary" style={{ minHeight: 40 }} onClick={() => useWorkflow.getState().toggleLibrary()}><Plus size={17} /> Add</button>
-        <button className="btn" style={{ minHeight: 40 }} onClick={() => setRunOpen(true)}><Play size={17} /> Run</button>
+        <button className="btn btn-primary" style={{ minHeight: 46 }} onClick={() => useWorkflow.getState().toggleLibrary()}><Plus size={17} /> Add</button>
+        <button className="btn" style={{ minHeight: 46 }} onClick={() => setRunOpen(true)}><Play size={17} /> Run</button>
         <button className="btn-icon btn-ghost" onClick={exportJson} aria-label="Export JSON" title="Export JSON"><Download size={18} /></button>
         <button className="btn-icon btn-ghost" onClick={() => fileRef.current?.click()} aria-label="Import JSON" title="Import JSON"><Upload size={18} /></button>
         <input
@@ -176,10 +176,17 @@ export function WorkflowEditorPage() {
           nodeTypes={nodeTypes}
           onNodesChange={store.onNodesChange}
           onEdgesChange={store.onEdgesChange}
-          onConnect={store.onConnect}
+          onConnect={(connection) => {
+            useWorkflow.getState().onConnect(connection);
+            toast('Nodes connected', 'success');
+          }}
           onNodeDragStart={() => useWorkflow.getState().pushHistory()}
           onNodeClick={(_, node) => useWorkflow.getState().selectNode(node.id)}
           onPaneClick={() => useWorkflow.getState().selectNode(null)}
+          isValidConnection={(c) => c.source !== c.target}
+          defaultEdgeOptions={{ animated: true, style: { stroke: 'var(--brand)', strokeWidth: 2 } }}
+          connectionLineStyle={{ stroke: 'var(--cyan)', strokeWidth: 2 }}
+          connectionLineType={ConnectionLineType.SmoothStep}
           fitView
           minZoom={0.25}
           maxZoom={2}

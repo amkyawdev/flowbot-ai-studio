@@ -8,7 +8,7 @@ import { LoginPage } from '@/pages/Login';
 import { DashboardPage } from '@/pages/Dashboard';
 import { WorkflowsPage } from '@/pages/Workflows';
 import { WorkflowEditorPage } from '@/pages/WorkflowEditor';
-import { ChatPage } from '@/pages/Chat';
+import { ChatPage, PublicChatPage } from '@/pages/Chat';
 import { BotsPage } from '@/pages/Bots';
 import { IntegrationsPage } from '@/pages/Integrations';
 import { AgentsPage } from '@/pages/Agents';
@@ -31,6 +31,7 @@ export default function App() {
               <Route path="/workflows" element={<WorkflowsPage />} />
                               <Route path="/workflows/:id" element={<WorkflowEditorPage />} />
                 <Route path="/chat" element={<ChatPage />} />
+                <Route path="/public-chat" element={<PublicChatPage />} />
               <Route path="/bots" element={<BotsPage />} />
               <Route path="/integrations" element={<IntegrationsPage />} />
               <Route path="/agents" element={<AgentsPage />} />

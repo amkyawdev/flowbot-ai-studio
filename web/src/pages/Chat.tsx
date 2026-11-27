@@ -15,8 +15,6 @@ import { DEFAULT_PRESETS, loadCustomPresets, play, saveCustomPresets, validatePr
 import type { AnimationPreset } from '@/lib/animations';
 import { timeAgo } from '@flowbot/shared';
 
-type Mode = 'ai' | 'public';
-
 const MODEL_SUGGESTIONS: Record<string, string[]> = {
   openai: ['gpt-4o-mini', 'gpt-4o', 'gpt-4.1-mini'],
   groq: ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant'],
@@ -65,7 +63,6 @@ function fmtTime(iso: string): string {
 }
 
 export function ChatPage() {
-  const [mode, setMode] = useState<Mode>('ai');
   const [mobileListOpen, setMobileListOpen] = useState(false);
   const loadConfig = useChat((s) => s.loadConfig);
   const loadConversations = useChat((s) => s.loadConversations);
@@ -75,21 +72,13 @@ export function ChatPage() {
     void loadConversations();
   }, [loadConfig, loadConversations]);
 
-  const sidebar = (
-    <SidebarContent
-      mode={mode}
-      onMode={(m) => { setMode(m); setMobileListOpen(false); }}
-      onPick={() => setMobileListOpen(false)}
-    />
-  );
+  const sidebar = <SidebarContent onPick={() => setMobileListOpen(false)} />;
 
   return (
     <div className="chat-page">
       <aside className="chat-sidebar" aria-label="Chat navigation">{sidebar}</aside>
       <section className="chat-main">
-        {mode === 'ai'
-          ? <AiChat onOpenList={() => setMobileListOpen(true)} />
-          : <PublicChat onOpenList={() => setMobileListOpen(true)} />}
+        <AiChat onOpenList={() => setMobileListOpen(true)} />
       </section>
       <Sheet open={mobileListOpen} onClose={() => setMobileListOpen(false)} title="Chats">
         {sidebar}
@@ -98,7 +87,17 @@ export function ChatPage() {
   );
 }
 
-function SidebarContent({ mode, onMode, onPick }: { mode: Mode; onMode: (m: Mode) => void; onPick: () => void }) {
+export function PublicChatPage() {
+  return (
+    <div className="chat-page chat-page-public">
+      <section className="chat-main">
+        <PublicChat />
+      </section>
+    </div>
+  );
+}
+
+function SidebarContent({ onPick }: { onPick: () => void }) {
   const conversations = useChat((s) => s.conversations);
   const activeId = useChat((s) => s.activeId);
   const search = useChat((s) => s.search);
@@ -115,7 +114,7 @@ function SidebarContent({ mode, onMode, onPick }: { mode: Mode; onMode: (m: Mode
     <div className="chat-sidebar-inner">
       <div className="chat-sidebar-head">
         <span className="chat-brand"><MessageSquare size={17} /> Chat</span>
-        <button className="btn-icon btn-ghost" aria-label="New chat" onClick={() => { void newConversation(); onMode('ai'); onPick(); }}>
+        <button className="btn-icon btn-ghost" aria-label="New chat" onClick={() => { void newConversation(); onPick(); }}>
           <Plus size={19} />
         </button>
       </div>
@@ -131,22 +130,11 @@ function SidebarContent({ mode, onMode, onPick }: { mode: Mode; onMode: (m: Mode
         />
       </div>
 
-      <button
-        className={`chat-room ${mode === 'public' ? 'active' : ''}`}
-        onClick={() => { onMode('public'); onPick(); }}
-      >
-        <span className="chat-room-icon"><Globe size={17} /></span>
-        <span>
-          <b>Public Chat</b>
-          <small>Everyone signed in · auto-clears after 24h</small>
-        </span>
-      </button>
-
       <div className="section-title" style={{ margin: '12px 4px 6px' }}>Your chats</div>
       <div className="chat-convos">
         {conversations.length === 0 && <div className="small dim" style={{ padding: '8px 4px' }}>No conversations yet.</div>}
         {conversations.map((c) => (
-          <div key={c.id} className={`chat-convo ${c.id === activeId && mode === 'ai' ? 'active' : ''}`}>
+          <div key={c.id} className={`chat-convo ${c.id === activeId ? 'active' : ''}`}>
             {renaming === c.id ? (
               <form
                 className="chat-rename"
@@ -164,7 +152,7 @@ function SidebarContent({ mode, onMode, onPick }: { mode: Mode; onMode: (m: Mode
               </form>
             ) : (
               <>
-                <button className="chat-convo-main" onClick={() => { void selectConversation(c.id); onMode('ai'); onPick(); }}>
+                <button className="chat-convo-main" onClick={() => { void selectConversation(c.id); onPick(); }}>
                   <span className="chat-convo-title">{c.title}</span>
                   <span className="chat-convo-sub">{timeAgo(c.updatedAt)}</span>
                 </button>
@@ -361,7 +349,7 @@ function ChatBubble({ message, userName, streaming, canRegenerate, onRegenerate,
   );
 }
 
-function PublicChat({ onOpenList }: { onOpenList: () => void }) {
+function PublicChat() {
   const user = useApp((s) => s.user);
   const toast = useApp((s) => s.toast);
   const reduced = useReducedMotion();
@@ -421,7 +409,6 @@ function PublicChat({ onOpenList }: { onOpenList: () => void }) {
   return (
     <>
       <header className="chat-header">
-        <button className="btn-icon btn-ghost chat-menu-btn" aria-label="Open chats" onClick={onOpenList}><Menu size={20} /></button>
         <div className="chat-title">
           <b>Public Chat</b>
           <span className="small dim"><Users size={12} /> {users.length} online · messages clear after 24h</span>
