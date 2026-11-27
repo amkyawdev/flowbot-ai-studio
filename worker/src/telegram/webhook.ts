@@ -98,6 +98,8 @@ async function handleCommand(
 ): Promise<void> {
   try {
     const commands = parseJsonSafe<Array<{ command: string; description: string; reply: string }>>(bot.commands_json, []);
+    const promptCfg = parseJsonSafe<Record<string, unknown>>(bot.prompt_config_json, {});
+    const keyboard = parseJsonSafe<unknown[]>(bot.keyboard_json, []);
     const lower = text.trim().toLowerCase();
     const matched = commands.find((cmd) => {
       const c = String(cmd.command || '').toLowerCase().replace(/^\//, '');
@@ -105,14 +107,17 @@ async function handleCommand(
     });
 
     let reply: string | null = null;
+    let useKeyboard = false;
     if (matched?.reply) {
       reply = matched.reply;
     } else if (lower === '/start' || lower === 'start') {
-      reply = `Hi! I'm ${bot.name}. Send /help to see what I can do.`;
+      // Custom /start text if configured, else a welcome default.
+      reply = String(promptCfg.startReply || promptCfg.welcome || `Hi! I'm ${bot.name}. Send /help to see what I can do.`);
+      useKeyboard = keyboard.length > 0;
     } else if (lower === '/help' || lower === 'help') {
       const cmds = commands.length ? commands.map((cmd) => `/${cmd.command} — ${cmd.description}`).join('\n') : 'No custom commands configured yet.';
       reply = `Available commands:\n${cmds}`;
-    } else if (bot.prompt_config_json && booleablePromptReply(bot)) {
+    } else if (promptCfg.enabled && promptCfg.agent) {
       // AI reply when a prompt config with an agent is set.
       reply = await aiReply(c, bot, text);
     }
@@ -120,7 +125,10 @@ async function handleCommand(
     if (reply !== null) {
       const data = JSON.parse(await resolver.decrypt(bot.token_enc)) as { token: string };
       const client = new TelegramClient({ token: data.token, apiUrl: c.env.TELEGRAM_API_URL });
-      await client.sendMessage(chatId, reply);
+      const replyMarkup = useKeyboard && keyboard.length > 0
+        ? { inline_keyboard: keyboard }
+        : undefined;
+      await client.sendMessage(chatId, reply, { reply_markup: replyMarkup });
       await c.env.DB.prepare(
         'INSERT INTO bot_messages (id, bot_id, chat_id, direction, text) VALUES (?, ?, ?, ?, ?)',
       ).bind(`bm_${crypto.randomUUID().replace(/-/g, '')}`, bot.id, chatId, 'out', reply).run();

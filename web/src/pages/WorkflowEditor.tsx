@@ -4,7 +4,7 @@ import {
   ReactFlow, Background, Controls, MiniMap, useNodesState, useEdgesState, BackgroundVariant,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { ArrowLeft, Plus, Play, Square, Undo2, Redo2, Save, Check, AlertTriangle } from 'lucide-react';
+import { ArrowLeft, Plus, Play, Square, Undo2, Redo2, Save, Check, AlertTriangle, Trash2 } from 'lucide-react';
 import { getNodeDefinition, validateGraph } from '@flowbot/shared';
 import { useWorkflow } from '@/store/workflow';
 import { useApp } from '@/store/app';
@@ -93,6 +93,14 @@ export function WorkflowEditorPage() {
         <button className="btn btn-primary" style={{ minHeight: 40 }} onClick={() => useWorkflow.getState().toggleLibrary()}><Plus size={17} /> Add</button>
         <button className="btn" style={{ minHeight: 40 }} onClick={() => void run()} disabled={store.running}>
           {store.running ? <span className="spinner" style={{ width: 15, height: 15 }} /> : <Play size={17} />} Run
+        </button>
+        <button className="btn-icon btn-ghost" style={{ color: 'var(--red)' }} aria-label="Delete workflow" title="Delete workflow"
+          onClick={async () => {
+            if (!confirm('Delete this workflow permanently?')) return;
+            try { await useWorkflow.getState().deleteWorkflow(); toast('Workflow deleted', 'success'); navigate('/workflows'); }
+            catch (e) { toast(e instanceof Error ? e.message : 'Delete failed', 'error'); }
+          }}>
+          <Trash2 size={18} />
         </button>
       </div>
 

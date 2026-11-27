@@ -97,7 +97,10 @@ export function NodeConfigSheet({ node }: { node: Node | null }) {
       >
         Save node
       </button>
-      <div className="row" style={{ marginTop: 8 }}>
+      <div className="row" style={{ marginTop: 8, display: 'flex', gap: 8 }}>
+        <button className="btn btn-block" onClick={() => { useWorkflow.getState().duplicateNode(node.id); toast('Node duplicated'); }}>
+          Duplicate
+        </button>
         <button className="btn btn-danger btn-block" onClick={() => { useWorkflow.getState().removeNode(node.id); toast('Node removed'); }}>
           Remove node
         </button>

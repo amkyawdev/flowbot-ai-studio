@@ -8,6 +8,7 @@ agentRoutes.use('/agents*', authMiddleware);
 
 interface AgentRow {
   id: string; name: string; system_prompt: string; provider: string; model: string;
+  base_url?: string; credential_id?: string | null;
   temperature: number; memory_config_json: string; tools_json: string;
   structured_output_json: string | null; created_at: string; updated_at: string;
 }
@@ -18,6 +19,7 @@ agentRoutes.get('/agents', async (c) => {
     .bind(app.workspace.id).all<AgentRow>();
   const list = results.map((r) => ({
     id: r.id, name: r.name, systemPrompt: r.system_prompt, provider: r.provider, model: r.model,
+    baseUrl: r.base_url ?? '', credentialId: r.credential_id ?? null,
     temperature: r.temperature, memoryConfig: parseJsonSafe(r.memory_config_json, {}),
     tools: parseJsonSafe(r.tools_json, []), structuredOutput: r.structured_output_json ? parseJsonSafe(r.structured_output_json, null) : null,
     createdAt: r.created_at, updatedAt: r.updated_at,
@@ -32,13 +34,15 @@ agentRoutes.post('/agents', async (c) => {
   if (!name) return jsonResponse({ error: 'name is required' }, 400);
   const id = `ag_${randomId()}`;
   await c.env.DB.prepare(
-    `INSERT INTO agents (id, workspace_id, name, system_prompt, provider, model, temperature, memory_config_json, tools_json, structured_output_json)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    `INSERT INTO agents (id, workspace_id, name, system_prompt, provider, model, base_url, credential_id, temperature, memory_config_json, tools_json, structured_output_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).bind(
     id, app.workspace.id, name,
     String(body?.systemPrompt ?? ''),
     String(body?.provider ?? 'openai'),
     String(body?.model ?? ''),
+    String(body?.baseUrl ?? ''),
+    body?.credentialId ? String(body.credentialId) : null,
     Number(body?.temperature ?? 0.7),
     JSON.stringify(body?.memoryConfig ?? {}),
     JSON.stringify(body?.tools ?? []),
@@ -55,12 +59,14 @@ agentRoutes.patch('/agents/:id', async (c) => {
   if (!existing) return jsonResponse({ error: 'Agent not found' }, 404);
   const body = await c.req.json().catch(() => ({}));
   await c.env.DB.prepare(
-    `UPDATE agents SET name = ?, system_prompt = ?, provider = ?, model = ?, temperature = ?, memory_config_json = ?, tools_json = ?, structured_output_json = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`,
+    `UPDATE agents SET name = ?, system_prompt = ?, provider = ?, model = ?, base_url = ?, credential_id = ?, temperature = ?, memory_config_json = ?, tools_json = ?, structured_output_json = ?, updated_at = strftime('%Y-%m-%dT%H:%M:%fZ','now') WHERE id = ?`,
   ).bind(
     body?.name !== undefined ? String(body.name) : existing.name,
     body?.systemPrompt !== undefined ? String(body.systemPrompt) : existing.system_prompt,
     body?.provider !== undefined ? String(body.provider) : existing.provider,
     body?.model !== undefined ? String(body.model) : existing.model,
+    body?.baseUrl !== undefined ? String(body.baseUrl) : (existing.base_url ?? ''),
+    body?.credentialId !== undefined ? (body.credentialId ? String(body.credentialId) : null) : (existing.credential_id ?? null),
     body?.temperature !== undefined ? Number(body.temperature) : existing.temperature,
     body?.memoryConfig !== undefined ? JSON.stringify(body.memoryConfig) : existing.memory_config_json,
     body?.tools !== undefined ? JSON.stringify(body.tools) : existing.tools_json,

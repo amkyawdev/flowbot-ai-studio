@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { BotMessageSquare, Plus, Trash2, Wand2 } from 'lucide-react';
-import { agentsApi } from '@/api/client';
+import { agentsApi, credentialsApi } from '@/api/client';
 import { Empty, Sheet, Loading } from '@/components/ui';
 import { useApp } from '@/store/app';
 
@@ -78,11 +78,18 @@ function AgentSheet({ agent, onClose, onDone }: { agent: any; onClose: () => voi
   const [systemPrompt, setSystemPrompt] = useState(agent.systemPrompt || '');
   const [provider, setProvider] = useState(agent.provider || 'openai');
   const [model, setModel] = useState(agent.model || providers[0].models[0]);
+  const [baseUrl, setBaseUrl] = useState(agent.baseUrl || '');
+  const [credentialId, setCredentialId] = useState(agent.credentialId || '');
+  const [credentials, setCredentials] = useState<any[]>([]);
   const [temperature, setTemperature] = useState(Number(agent.temperature ?? 0.7));
   const [tools, setTools] = useState<string>((agent.tools || []).map((t: any) => t.name || t).join(', '));
   const [structured, setStructured] = useState<string>(agent.structuredOutput ? JSON.stringify(agent.structuredOutput) : '');
   const [structuredEnabled, setStructuredEnabled] = useState(Boolean(agent.structuredOutput));
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    credentialsApi.list().then((r) => setCredentials(r.credentials)).catch(() => undefined);
+  }, []);
 
   const providerModelOptions = providers.find((p) => p.value === provider)?.models ?? [];
 
@@ -94,6 +101,8 @@ function AgentSheet({ agent, onClose, onDone }: { agent: any; onClose: () => voi
       systemPrompt,
       provider,
       model,
+      baseUrl: baseUrl.trim(),
+      credentialId: credentialId || null,
       temperature,
       tools: tools.split(',').map((t) => t.trim()).filter(Boolean).map((name) => ({ name, type: 'builtin' })),
       structuredOutput: structuredEnabled ? parseJsonLoose(structured) : null,
@@ -106,8 +115,6 @@ function AgentSheet({ agent, onClose, onDone }: { agent: any; onClose: () => voi
     } catch (e) { toast(e instanceof Error ? e.message : 'Save failed', 'error'); }
     finally { setBusy(false); }
   }
-
-  const selectable = agentsApi;
 
   return (
     <Sheet open onClose={onClose} title={agent.id === 'new' ? 'New AI agent' : 'Edit agent'}>
@@ -124,6 +131,19 @@ function AgentSheet({ agent, onClose, onDone }: { agent: any; onClose: () => voi
         <input className="input" list="agent-models" value={model} onChange={(e) => setModel(e.target.value)} placeholder="model id" />
         <datalist id="agent-models">{providerModelOptions.map((m) => <option key={m} value={m} />)}</datalist>
       </div>
+      <div className="field">
+        <label>Custom endpoint (base URL)</label>
+        <input className="input mono" value={baseUrl} onChange={(e) => setBaseUrl(e.target.value)} placeholder="https://api.example.com/v1 (blank = provider default)" />
+        <div className="hint">Point at any OpenAI-compatible endpoint (self-hosted, local gateway, another AI service).</div>
+      </div>
+      <div className="field">
+        <label>API credential</label>
+        <select className="select" value={credentialId} onChange={(e) => setCredentialId(e.target.value)}>
+          <option value="">Auto (latest {provider} credential)</option>
+          {credentials.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.provider})</option>)}
+        </select>
+        <div className="hint">Add API keys on the <b>Credentials</b> page. Works without one if a provider credential already exists.</div>
+      </div>
       <div className="field"><label>Temperature ({temperature.toFixed(1)})</label><input className="input" type="range" min={0} max={2} step={0.1} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} /></div>
       <div className="field"><label>Tools (comma-separated, e.g. mcp)</label><input className="input" value={tools} onChange={(e) => setTools(e.target.value)} placeholder="mcp, calculator" /></div>
       <label className="flex" style={{ minHeight: 44, marginBottom: 8 }}>
@@ -135,7 +155,7 @@ function AgentSheet({ agent, onClose, onDone }: { agent: any; onClose: () => voi
       )}
       <button className="btn btn-primary btn-block" disabled={busy} onClick={() => void save()}>{busy ? <span className="spinner" /> : <Wand2 size={17} />} Save agent</button>
       <div className="hint" style={{ marginTop: 10, textAlign: 'center' }}>
-        Add an <b>OpenAI-compatible / Gemini</b> credential on the Credentials page to power this agent.
+        Works with defaults, or point at your own endpoint + API key above.
       </div>
     </Sheet>
   );

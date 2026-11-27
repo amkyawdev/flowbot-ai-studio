@@ -105,10 +105,11 @@ export const executors: Record<string, NodeExecutor> = {
       if (!agent) throw new Error(`AI Agent not found: ${agentId}`);
       const input = await resolveString(ctx, node, cfg.input, ctx.output('input'));
       const credential = await ctx.vaultForAgent(agent);
+      const agentBaseUrl = String((agent.base_url as string) || '');
       const result = await withTimeout(90_000, () => chatCompletion({
         provider: String(agent.provider || 'openai') as 'openai' | 'gemini' | 'anthropic',
         apiKey: credential.apiKey || credential.token || '',
-        baseUrl: credential.baseUrl || undefined,
+        baseUrl: agentBaseUrl || credential.baseUrl || undefined,
         model: String(agent.model || ''),
         messages: [
           { role: 'system', content: String(agent.system_prompt || '') },

@@ -33,6 +33,8 @@ interface WorkflowState {
   selectNode: (id: string | null) => void;
   updateNodeData: (id: string, data: Record<string, unknown>) => void;
   removeNode: (id: string) => void;
+  duplicateNode: (id: string) => void;
+  deleteWorkflow: () => Promise<void>;
   toggleLibrary: () => void;
   undo: () => void;
   redo: () => void;
@@ -156,6 +158,27 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
         edges: s.edges.filter((e) => e.source !== id && e.target !== id),
         selectedNodeId: null,
       }));
+    },
+
+    duplicateNode(id) {
+      const src = get().nodes.find((n) => n.id === id);
+      if (!src) return;
+      pushHistory(get().nodes, get().edges);
+      const newId = `n_${uuid().slice(0, 10)}`;
+      const copy = {
+        ...structuredClone(src),
+        id: newId,
+        position: { x: src.position.x + 40, y: src.position.y + 40 },
+      };
+      set((s) => ({ nodes: [...s.nodes, copy], selectedNodeId: newId }));
+    },
+
+    async deleteWorkflow() {
+      const { id } = get();
+      if (!id) return;
+      await workflowsApi.remove(id);
+      localStorage.removeItem(AUTOSAVE_KEY);
+      set({ id: null, nodes: [], edges: [], past: [], future: [] });
     },
 
     toggleLibrary() { set((s) => ({ libraryOpen: !s.libraryOpen })); },

@@ -105,19 +105,31 @@ function CreateBotSheet({ open, onClose, onSave }: { open: boolean; onClose: () 
 
 function ManageBotSheet({ bot, onClose, onRefresh, onWebhook, onDelete }: { bot: any; onClose: () => void; onRefresh: () => void; onWebhook: () => void; onDelete: () => void }) {
   const toast = useApp((s) => s.toast);
-  const [commands, setCommands] = useState<string>(bot.commands?.length ? bot.commands.map((c: any) => `/${c.command} — ${c.description}`).join('\n') : '');
+  const [commands, setCommands] = useState<string>(bot.commands?.length ? bot.commands.map((c: any) => `/${c.command} — ${c.description}${c.reply ? ` = ${c.reply}` : ''}`).join('\n') : '');
+  const [welcome, setWelcome] = useState(String(bot.promptConfig?.welcome || ''));
+  const [startReply, setStartReply] = useState(String(bot.promptConfig?.startReply || ''));
+  const [menuButtons, setMenuButtons] = useState<string>(bot.keyboard?.length ? bot.keyboard.map((row: any) => (Array.isArray(row) ? row : [row]).map((b: any) => b.text || b.label || '').join(' | ')).join('\n') : '');
   const [chatId, setChatId] = useState('');
   const [testText, setTestText] = useState('Hello from FlowBot AI Studio ✨');
   const [promptConfig, setPromptConfig] = useState(bot.promptConfig ?? {});
 
   async function saveSettings() {
     try {
+      const parsedCommands = commands.split('\n').filter(Boolean).map((line) => {
+        // format: /cmd — description = reply text
+        const withReply = line.match(/^\/?([\w]+)\s*[-—:]\s*(.*?)\s*=\s*(.+)$/);
+        if (withReply) return { command: withReply[1], description: withReply[2].trim(), reply: withReply[3].trim() };
+        const m = line.trim().match(/^\/?([\w]+)\s*[-—:]\s*(.*)$/);
+        return m ? { command: m[1], description: m[2] } : null;
+      }).filter(Boolean);
+      // Menu: one row per line, buttons separated by " | "
+      const keyboard = menuButtons.split('\n').filter(Boolean).map((row) =>
+        row.split('|').map((label) => label.trim()).filter(Boolean).map((label) => ({ text: label, callback_data: label })),
+      ).filter((r) => r.length > 0);
       await botsApi.save(bot.id, {
-        commands: commands.split('\n').filter(Boolean).map((line) => {
-          const m = line.trim().match(/^\/([\w]+)\s*[-—:]\s*(.*)$/) || line.trim().match(/^([\w]+)\s*[-—:]\s*(.*)$/);
-          return m ? { command: m[1], description: m[2] } : null;
-        }).filter(Boolean),
-        promptConfig,
+        commands: parsedCommands,
+        keyboard,
+        promptConfig: { ...promptConfig, welcome, startReply },
       });
       toast('Bot settings saved', 'success');
       onRefresh();
@@ -137,13 +149,31 @@ function ManageBotSheet({ bot, onClose, onRefresh, onWebhook, onDelete }: { bot:
         <button className="btn" style={{ minHeight: 38, fontSize: 13 }} onClick={() => void onDelete()}><Trash2 size={15} /> Delete</button>
       </div>
 
-      <div className="section-title">Commands</div>
+      <div className="section-title">Welcome &amp; start</div>
       <div className="field">
-        <label>Custom commands (one per line: /command — description)</label>
-        <textarea className="textarea mono" rows={5} value={commands} onChange={(e) => setCommands(e.target.value)} placeholder={'/start — Start the bot\n/help — Show help\n/quote — Get a quote'} />
+        <label>Welcome text (first contact / greeting)</label>
+        <textarea className="textarea" rows={2} value={welcome} onChange={(e) => setWelcome(e.target.value)} placeholder="Welcome to my bot! 👋" />
+      </div>
+      <div className="field">
+        <label>/start reply</label>
+        <textarea className="textarea" rows={2} value={startReply} onChange={(e) => setStartReply(e.target.value)} placeholder="Hello! Tap a button below to begin." />
       </div>
 
-      <div className="section-title">AI reply (when no workflow handles the message)</div>
+      <div className="section-title">Commands</div>
+      <div className="field">
+        <label>One per line: /command — description = reply</label>
+        <textarea className="textarea mono" rows={5} value={commands} onChange={(e) => setCommands(e.target.value)} placeholder={'/start — Start the bot = Welcome!\n/help — Show help\n/quote — Get a quote = Stay hungry, stay foolish.'} />
+        <div className="hint">Add <span className="mono">= reply text</span> to make the command answer automatically.</div>
+      </div>
+
+      <div className="section-title">Menu buttons</div>
+      <div className="field">
+        <label>One row per line, buttons separated by <span className="mono">|</span></label>
+        <textarea className="textarea mono" rows={3} value={menuButtons} onChange={(e) => setMenuButtons(e.target.value)} placeholder={'About | Help\nContact'} />
+        <div className="hint">Shown as an inline keyboard after /start.</div>
+      </div>
+
+      <div className="section-title">AI reply (when no command/workflow handles the message)</div>
       <div className="field">
         <label>AI provider</label>
         <select className="select" value={String(promptConfig.provider || 'openai')} onChange={(e) => setPromptConfig({ ...promptConfig, provider: e.target.value })}>
@@ -151,6 +181,10 @@ function ManageBotSheet({ bot, onClose, onRefresh, onWebhook, onDelete }: { bot:
         </select>
       </div>
       <div className="field"><label>System prompt</label><textarea className="textarea" rows={3} value={String(promptConfig.systemPrompt || '')} onChange={(e) => setPromptConfig({ ...promptConfig, systemPrompt: e.target.value })} placeholder="You are a helpful assistant…" /></div>
+      <label className="flex" style={{ minHeight: 40, marginBottom: 10 }}>
+        <input type="checkbox" checked={Boolean(promptConfig.enabled)} onChange={(e) => setPromptConfig({ ...promptConfig, enabled: e.target.checked })} style={{ width: 20, height: 20 }} />
+        <span className="small">Enable AI replies for unmatched messages</span>
+      </label>
       <button className="btn btn-primary btn-block" onClick={saveSettings}><Power size={17} /> Save settings</button>
 
       <div className="section-title">Test flow</div>
