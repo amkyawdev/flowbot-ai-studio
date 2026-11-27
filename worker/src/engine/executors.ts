@@ -261,12 +261,9 @@ export const executors: Record<string, NodeExecutor> = {
   zillizSearch: {
     async execute(ctx, node) {
       const cfg = node.data;
-      const endpoint = ctx.env.ZILLIZ_ENDPOINT;
-      const token = ctx.env.ZILLIZ_TOKEN;
-      if (!endpoint || !token) throw new Error('Zilliz is not configured (set ZILLIZ_ENDPOINT / ZILLIZ_TOKEN).');
-      const zcfg = { endpoint, token };
+      const { zcfg, collection: defaultCollection } = zillizConfigFromEnv(ctx.env);
+      const collection = String(cfg.collection || defaultCollection);
       const query = await resolveString(ctx, node, cfg.query, ctx.output('query'));
-      const collection = String(cfg.collection || ctx.env.ZILLIZ_COLLECTION || 'flowbot_chunks');
       let vec: number[] | null = null;
       if (cfg.embedCredential) {
         try {
@@ -289,12 +286,9 @@ export const executors: Record<string, NodeExecutor> = {
   zillizInsert: {
     async execute(ctx, node) {
       const cfg = node.data;
-      const endpoint = ctx.env.ZILLIZ_ENDPOINT;
-      const token = ctx.env.ZILLIZ_TOKEN;
-      if (!endpoint || !token) throw new Error('Zilliz is not configured (set ZILLIZ_ENDPOINT / ZILLIZ_TOKEN).');
-      const zcfg = { endpoint, token };
+      const { zcfg, collection: defaultCollection } = zillizConfigFromEnv(ctx.env);
+      const collection = String(cfg.collection || defaultCollection);
       const text = await resolveString(ctx, node, cfg.text, ctx.output('text'));
-      const collection = String(cfg.collection || ctx.env.ZILLIZ_COLLECTION || 'flowbot_chunks');
       let vec: number[] | null = null;
       if (cfg.embedCredential) {
         try {
@@ -326,6 +320,30 @@ export const executors: Record<string, NodeExecutor> = {
     },
   },
 };
+
+/**
+ * Resolve Zilliz config strictly from Worker env bindings (never the client).
+ * Throws a clear error when not configured so vector nodes degrade gracefully
+ * instead of failing obscurely.
+ */
+export function zillizConfigFromEnv(
+  env: Pick<import('../types').Env, 'ZILLIZ_ENDPOINT' | 'ZILLIZ_API_KEY' | 'ZILLIZ_COLLECTION'>,
+): {
+  zcfg: { endpoint: string; token: string };
+  collection: string;
+} {
+  const endpoint = String(env.ZILLIZ_ENDPOINT || '').trim();
+  const apiKey = String(env.ZILLIZ_API_KEY || '').trim();
+  if (!endpoint || !apiKey) {
+    throw new Error(
+      'Zilliz is not configured. Set the Worker secrets ZILLIZ_ENDPOINT and ZILLIZ_API_KEY (then deploy or run `wrangler secret put`).',
+    );
+  }
+  return {
+    zcfg: { endpoint, token: apiKey },
+    collection: String(env.ZILLIZ_COLLECTION || 'flowbot_chunks'),
+  };
+}
 
 /** Create the Zilliz collection if it does not yet exist. */
 async function ensureCollection(

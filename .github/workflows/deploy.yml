@@ -45,14 +45,14 @@ jobs:
           CREDENTIAL_MASTER_KEY: ${{ secrets.CREDENTIAL_MASTER_KEY }}
           AUTH_SESSION_SECRET: ${{ secrets.AUTH_SESSION_SECRET }}
           ZILLIZ_ENDPOINT: ${{ secrets.ZILLIZ_ENDPOINT }}
-          ZILLIZ_TOKEN: ${{ secrets.ZILLIZ_TOKEN }}
+          ZILLIZ_API_KEY: ${{ secrets.ZILLIZ_API_KEY }}
         run: |
           set -e
           if [ -n "$CREDENTIAL_MASTER_KEY" ]; then
             printf '%s' "$CREDENTIAL_MASTER_KEY" | npx wrangler secret put CREDENTIAL_MASTER_KEY
             printf '%s' "$AUTH_SESSION_SECRET" | npx wrangler secret put AUTH_SESSION_SECRET
           fi
-          if [ -n "$ZILLIZ_TOKEN" ]; then
+          if [ -n "$ZILLIZ_API_KEY" ]; then
             printf '%s' "$ZILLIZ_ENDPOINT" | npx wrangler secret put ZILLIZ_ENDPOINT
-            printf '%s' "$ZILLIZ_TOKEN" | npx wrangler secret put ZILLIZ_TOKEN
+            printf '%s' "$ZILLIZ_API_KEY" | npx wrangler secret put ZILLIZ_API_KEY
           fi

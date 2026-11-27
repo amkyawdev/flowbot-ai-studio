@@ -100,17 +100,17 @@ integrationRoutes.post('/integrations/:id/test', async (c) => {
       message = res.ok ? `Connected — ${res.toolCount ?? 0} tools available` : (res.error || 'MCP connection failed');
     } else if (row.type === 'zilliz') {
       const { testConnection } = await import('../integrations/zilliz');
-      let token = c.env.ZILLIZ_TOKEN;
+      let apiKey = c.env.ZILLIZ_API_KEY;
       let endpoint = String(cfg.endpoint || c.env.ZILLIZ_ENDPOINT || '');
       if (row.secret_enc) {
         const resolver = makeCredentialResolver(c.env, app.workspace.id);
         const secret = JSON.parse(await resolver.decrypt(row.secret_enc)) as { value?: string };
-        if (secret.value) token = secret.value;
+        if (secret.value) apiKey = secret.value;
       }
-      if (!endpoint || !token) {
-        message = 'Zilliz is not configured — set ZILLIZ_ENDPOINT / ZILLIZ_TOKEN as Worker secrets.';
+      if (!endpoint || !apiKey) {
+        message = 'Zilliz is not configured — set ZILLIZ_ENDPOINT and ZILLIZ_API_KEY as Worker secrets.';
       } else {
-        const res = await testConnection({ endpoint, token });
+        const res = await testConnection({ endpoint, token: apiKey });
         ok = res.ok;
         message = res.ok ? `Connected — ${res.collections?.length ?? 0} collections` : (res.message || 'Failed');
       }

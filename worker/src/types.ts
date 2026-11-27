@@ -10,7 +10,8 @@ export interface Env {
   APP_BASE_URL?: string;
   CORS_ORIGINS?: string;
   ZILLIZ_ENDPOINT?: string;
-  ZILLIZ_TOKEN?: string;
+  /** Canonical Zilliz credential (Worker secret). Never exposed to the client. */
+  ZILLIZ_API_KEY?: string;
   ZILLIZ_COLLECTION?: string;
   TELEGRAM_API_URL?: string;
 }

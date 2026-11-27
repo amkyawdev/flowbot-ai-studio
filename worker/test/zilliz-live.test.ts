@@ -1,16 +1,16 @@
 /**
  * Live connectivity test for the Zilliz integration.
  *
- * Runs only when ZILLIZ_ENDPOINT and ZILLIZ_TOKEN are present in the
+ * Runs only when ZILLIZ_ENDPOINT and ZILLIZ_API_KEY are present in the
  * environment — otherwise the test is skipped (never fails CI without creds).
  */
 import { describe, it, expect } from 'vitest';
 import { testConnection, describeCollection, createCollection, search, insert } from '../src/integrations/zilliz';
 
-const hasCreds = Boolean(process.env.ZILLIZ_ENDPOINT && process.env.ZILLIZ_TOKEN);
+const hasCreds = Boolean(process.env.ZILLIZ_ENDPOINT && process.env.ZILLIZ_API_KEY);
 const cfg = {
   endpoint: process.env.ZILLIZ_ENDPOINT || '',
-  token: process.env.ZILLIZ_TOKEN || '',
+  token: process.env.ZILLIZ_API_KEY || '',
 };
 
 describe.runIf(hasCreds)('Zilliz live connectivity', () => {

@@ -96,7 +96,7 @@ npm install
 # 2. Run the Worker locally (miniflare). Create worker/.dev.vars with secrets:
 #    CREDENTIAL_MASTER_KEY  (base64 32 bytes, e.g. `openssl rand -base64 32`)
 #    AUTH_SESSION_SECRET    (e.g. `openssl rand -hex 32`)
-#    ZILLIZ_ENDPOINT / ZILLIZ_TOKEN (optional)
+#    ZILLIZ_ENDPOINT / ZILLIZ_API_KEY (optional, server-side only)
 npm run dev:worker          # http://localhost:8787
 
 # 3. Seed local D1
@@ -130,7 +130,7 @@ The PWA builds a service worker for offline app-shell caching. See [PWA install]
    echo "$CREDENTIAL_MASTER_KEY" | npx wrangler secret put CREDENTIAL_MASTER_KEY
    echo "$AUTH_SESSION_SECRET"   | npx wrangler secret put AUTH_SESSION_SECRET
    echo "$ZILLIZ_ENDPOINT"       | npx wrangler secret put ZILLIZ_ENDPOINT   # optional
-   echo "$ZILLIZ_TOKEN"          | npx wrangler secret put ZILLIZ_TOKEN      # optional
+   echo "$ZILLIZ_API_KEY"        | npx wrangler secret put ZILLIZ_API_KEY    # optional (server-side only)
    echo "$APP_BASE_URL"          | npx wrangler secret put APP_BASE_URL      # your public URL
    ```
 5. **Apply migrations**:
@@ -149,7 +149,7 @@ The included [Deploy workflow](.github/workflows/deploy.yml) runs on `main` push
 | `CLOUDFLARE_API_TOKEN` | Workers + D1 + KV + R2 + Queues edit |
 | `CLOUDFLARE_ACCOUNT_ID` | Your Cloudflare account ID |
 | `CREDENTIAL_MASTER_KEY` / `AUTH_SESSION_SECRET` | Vault + session secrets |
-| `ZILLIZ_ENDPOINT` / `ZILLIZ_TOKEN` | Optional vector store |
+| `ZILLIZ_ENDPOINT` / `ZILLIZ_API_KEY` | Optional vector store (endpoint = variable, API key = secret) |
 
 ## D1 migrations
 
@@ -178,11 +178,13 @@ npx wrangler d1 migrations apply flowbot-db --remote   # production
 
 Zilliz Cloud (Milvus) powers **vector embeddings, semantic search, long-term memory and knowledge-base chunks**. It is a configurable endpoint, not a required credential:
 
-- Set `ZILLIZ_ENDPOINT` and `ZILLIZ_TOKEN` as Cloudflare Worker secrets.
-- The `Zilliz Vector Insert` node **auto-creates the collection** on first write (`flowbot_chunks` by default).
-- When Zilliz secrets are absent, vector nodes **fail gracefully** with a clear "not configured" error — the rest of the workflow still runs.
+- `ZILLIZ_ENDPOINT` — the Zilliz Cloud REST base URL (e.g. `https://in03-…cloud.zilliz.com`). Configured as a Cloudflare Worker **variable** (`vars`) or secret.
+- `ZILLIZ_API_KEY` — the Zilliz API key. Configured as a Cloudflare Worker **secret** via `npx wrangler secret put ZILLIZ_API_KEY`. Read **only** server-side from `env.ZILLIZ_API_KEY` — never committed, logged, or exposed to the browser.
+- `ZILLIZ_COLLECTION` — optional collection name (default `flowbot_chunks`).
+- The `Zilliz Vector Insert` node **auto-creates the collection** on first write.
+- When `ZILLIZ_ENDPOINT`/`ZILLIZ_API_KEY` are absent, vector nodes **fail gracefully** with a clear "not configured" message — the rest of the workflow still runs.
 
-The API contract (camelCase collection names) is verified against a live Zilliz Cloud in `worker/test/zilliz-live.test.ts`, covering list → create → describe → insert → search → drop. **The Zilliz token is only ever consumed from a Worker secret (env binding) — it is never committed and never exposed to the browser.**
+The API contract (camelCase collection names) is verified against a live Zilliz Cloud in `worker/test/zilliz-live.test.ts`, covering list → create → describe → insert → search → drop. Configuration validation is covered by `worker/test/zilliz-config.test.ts`. **The API key is consumed strictly from the Worker secret binding and never reaches client code.**
 
 ## Telegram setup
 
@@ -244,7 +246,7 @@ Optional signing secrets (all four required, else release stays unsigned):
 
 | Symptom | Fix |
 |---|---|
-| `Zilliz is not configured` | Set `ZILLIZ_ENDPOINT`/`ZILLIZ_TOKEN` as Worker secrets. |
+| `Zilliz is not configured` | Set `ZILLIZ_ENDPOINT` + `ZILLIZ_API_KEY` as Worker vars/secret. |
 | `Invalid Telegram bot token` | Paste the exact token from @BotFather (starts `123456789:…`). |
 | Webhook returns 404 | Webhook URL must equal `<APP_BASE_URL>/api/in/telegram/<secret>`. |
 | `Cannot find collection` | The insert node auto-creates it; match the vector dimension if manual. |
@@ -274,7 +276,7 @@ See [`.env.example`](.env.example) for the canonical list. Key variables:
 | `AUTH_SESSION_SECRET` | Worker secret | session signing key |
 | `APP_BASE_URL` | Worker secret | public origin of the Worker |
 | `CORS_ORIGINS` | Worker env | comma-separated allowed origins |
-| `ZILLIZ_ENDPOINT`, `ZILLIZ_TOKEN`, `ZILLIZ_COLLECTION` | Worker secret | optional vector store |
+| `ZILLIZ_ENDPOINT`, `ZILLIZ_API_KEY`, `ZILLIZ_COLLECTION` | Worker var/secret | optional vector store (endpoint + API key are server-side only) |
 | `VITE_API_BASE_URL` | web `.env` | backend URL during dev/build |
 
 ## Admin information
