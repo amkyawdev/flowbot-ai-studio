@@ -1,0 +1,3 @@
+Contact: mailto:security@example.com
+Preferred-Languages: en
+Canonical: https://flowbot-ai-studio.amkyaw-dev.workers.dev/.well-known/security.txt

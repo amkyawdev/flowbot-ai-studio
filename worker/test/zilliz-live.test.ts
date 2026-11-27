@@ -54,7 +54,7 @@ describe.runIf(hasCreds)('Zilliz live connectivity', () => {
     await fetch(`${cfg.endpoint}/v2/vectordb/collections/drop`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${cfg.token}` },
-      body: JSON.stringify({ db_name: 'default', collection_name: name }),
+      body: JSON.stringify({ dbName: 'default', collectionName: name }),
     }).catch(() => undefined);
   }, 30000);
 });

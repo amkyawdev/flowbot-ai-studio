@@ -65,7 +65,7 @@ export const NODE_REGISTRY: NodeDefinition[] = [
       { id: 'message', label: 'Message', type: 'object' },
     ],
     config: [
-      { key: 'bot', label: 'Bot', type: 'credential', required: true, help: 'Select a connected Telegram bot' },
+      { key: 'bot', label: 'Bot', type: 'bot', required: true, help: 'Select a connected Telegram bot' },
       { key: 'command', label: 'Command filter', type: 'string', placeholder: 'e.g. /start — empty = any message', default: '' },
     ],
     defaults: { bot: '', command: '' },
@@ -83,7 +83,7 @@ export const NODE_REGISTRY: NodeDefinition[] = [
     ],
     outputs: [{ id: 'result', label: 'Result', type: 'object' }],
     config: [
-      { key: 'bot', label: 'Bot', type: 'credential', required: true, help: 'Select a connected Telegram bot' },
+      { key: 'bot', label: 'Bot', type: 'bot', required: true, help: 'Select a connected Telegram bot' },
       { key: 'chatId', label: 'Chat ID', type: 'string', placeholder: 'Default chat ID (may also come from input)', default: '' },
       { key: 'text', label: 'Text', type: 'textarea', rows: 3, placeholder: 'Message text, supports {{handlebars}}', default: '' },
     ],
@@ -99,7 +99,7 @@ export const NODE_REGISTRY: NodeDefinition[] = [
     inputs: [{ id: 'input', label: 'User input', type: 'string' }],
     outputs: [{ id: 'text', label: 'Text', type: 'string' }, { id: 'usage', label: 'Usage', type: 'object' }],
     config: [
-      { key: 'agent', label: 'Agent', type: 'credential', required: true, help: 'Select a reusable agent from the AI Agents page' },
+      { key: 'agent', label: 'Agent', type: 'agent', required: true, help: 'Select a reusable agent from the AI Agents page' },
       { key: 'input', label: 'Input text', type: 'textarea', rows: 2, placeholder: 'Optional {{template}}; overrides input port', default: '' },
     ],
     defaults: { agent: '', input: '' },
@@ -118,12 +118,13 @@ export const NODE_REGISTRY: NodeDefinition[] = [
     config: [
       { key: 'credential', label: 'API credential', type: 'credential', required: true, help: 'OpenAI-compatible API key (OpenAI, Groq, OpenRouter…)' },
       { key: 'model', label: 'Model', type: 'string', required: true, placeholder: 'e.g. gpt-4o-mini', default: '' },
+      { key: 'baseUrl', label: 'Base URL override', type: 'string', placeholder: 'https://api.example.com/v1', help: 'Optional; blank uses the credential or provider default.', default: '' },
       { key: 'system', label: 'System prompt', type: 'textarea', rows: 3, default: '' },
       { key: 'prompt', label: 'Prompt', type: 'textarea', rows: 3, placeholder: 'User message ({{template}})', default: '' },
       { key: 'temperature', label: 'Temperature', type: 'number', default: 0.7 },
       { key: 'maxTokens', label: 'Max tokens', type: 'number', default: 1024 },
     ],
-    defaults: { credential: '', model: '', system: '', prompt: '', temperature: 0.7, maxTokens: 1024 },
+    defaults: { credential: '', model: '', baseUrl: '', system: '', prompt: '', temperature: 0.7, maxTokens: 1024 },
     timeoutMs: 90000,
     retryable: true,
   },
@@ -151,6 +152,31 @@ export const NODE_REGISTRY: NodeDefinition[] = [
     timeoutMs: 90000,
     retryable: true,
   },
+  {
+    type: 'cloudflareAI',
+    category: 'ai',
+    name: 'Cloudflare Workers AI',
+    description: 'Generate text with a Cloudflare Workers AI model (runs server-side via env.AI).',
+    icon: 'sparkles',
+    color: '#f3803b',
+    inputs: [{ id: 'prompt', label: 'Prompt', type: 'string' }],
+    outputs: [{ id: 'text', label: 'Text', type: 'string' }, { id: 'usage', label: 'Usage', type: 'object' }],
+    config: [
+      { key: 'model', label: 'Model', type: 'select', default: '@cf/meta/llama-3.1-8b-instruct', options: [
+        { value: '@cf/meta/llama-3.1-8b-instruct', label: 'Llama 3.1 8B Instruct' },
+        { value: '@cf/meta/llama-3.3-70b-instruct', label: 'Llama 3.3 70B Instruct' },
+        { value: '@cf/mistral/mistral-7b-instruct', label: 'Mistral 7B Instruct' },
+      ]},
+      { key: 'system', label: 'System prompt', type: 'textarea', rows: 3, default: '' },
+      { key: 'prompt', label: 'Prompt', type: 'textarea', rows: 3, placeholder: 'User message ({{template}})', default: '' },
+      { key: 'temperature', label: 'Temperature', type: 'number', default: 0.7 },
+      { key: 'maxTokens', label: 'Max tokens', type: 'number', default: 1024 },
+    ],
+    defaults: { model: '@cf/meta/llama-3.1-8b-instruct', system: '', prompt: '', temperature: 0.7, maxTokens: 1024 },
+    timeoutMs: 90000,
+    retryable: true,
+  },
+
   {
     type: 'httpRequest',
     category: 'action',

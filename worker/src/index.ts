@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import type { Env, QueueMessage } from './types';
 import type { AppEnv } from './utils';
-import { corsHeaders } from './utils';
+import { corsHeaders, securityHeaders } from './utils';
 import { authRoutes } from './routes/auth';
 import { workflowRoutes } from './routes/workflows';
 import { executionRoutes } from './routes/executions';
@@ -11,6 +11,7 @@ import { integrationRoutes } from './routes/integrations';
 import { agentRoutes } from './routes/agents';
 import { settingRoutes } from './routes/settings';
 import { dashboardRoutes } from './routes/dashboard';
+import { chatRoutes, purgeOldPublicMessages } from './routes/chat';
 import { inboundWebhook } from './routes/inbound';
 import { telegramWebhookHandler } from './telegram/webhook';
 import { runWorkflowInWorker } from './engine/runner';
@@ -18,13 +19,13 @@ import { runWorkflowInWorker } from './engine/runner';
 const app = new Hono<AppEnv>();
 
 app.use('*', async (c, next) => {
+  const origin = c.req.header('Origin');
+  const baseHeaders = { ...corsHeaders(c.env, origin), ...securityHeaders() };
   if (c.req.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders(c.env) });
+    return new Response(null, { status: 204, headers: baseHeaders });
   }
-  // Set CORS headers on the outgoing response for every non-OPTIONS request.
   await next();
-  const headers = corsHeaders(c.env);
-  for (const [k, v] of Object.entries(headers)) {
+  for (const [k, v] of Object.entries(baseHeaders) as Array<[string, string]>) {
     c.header(k, v);
   }
 });
@@ -40,6 +41,7 @@ app.route('/api', integrationRoutes);
 app.route('/api', agentRoutes);
 app.route('/api', settingRoutes);
 app.route('/api', dashboardRoutes);
+app.route('/api', chatRoutes);
 
 // Public inbound paths (no auth): webhook triggers + Telegram updates.
 app.post('/api/in/webhook/:path', inboundWebhook);
@@ -48,15 +50,28 @@ app.put('/api/in/webhook/:path', inboundWebhook);
 app.post('/api/in/telegram/:secret', telegramWebhookHandler);
 
 // Unknown API routes → JSON 404. Everything else → serve the PWA (SPA).
-app.notFound((c) => {
+app.notFound(async (c) => {
   const url = new URL(c.req.url);
   if (url.pathname.startsWith('/api/')) return c.json({ error: 'Not found' }, 404);
-  if (c.env.ASSETS) return c.env.ASSETS.fetch(c.req.raw);
+  if (c.env.ASSETS) {
+    const res = await c.env.ASSETS.fetch(c.req.raw);
+    const headers = new Headers(res.headers);
+    // Fingerprinted build assets are immutable; HTML must revalidate.
+    if (url.pathname.startsWith('/assets/')) {
+      headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+    } else {
+      headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+    }
+    return new Response(res.body, { status: res.status, statusText: res.statusText, headers });
+  }
   return c.json({ error: 'Not found' }, 404);
 });
 
 export default {
   fetch: app.fetch,
+  async scheduled(_event: ScheduledController, env: Env, ctx: ExecutionContext) {
+    ctx.waitUntil(purgeOldPublicMessages(env));
+  },
   async queue(batch: MessageBatch<QueueMessage>, env: Env) {
     for (const msg of batch.messages) {
       const m = msg.body as QueueMessage;

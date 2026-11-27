@@ -3,6 +3,8 @@ import type { Env, CredentialRow } from '../types';
 import { AppEnv, authMiddleware, jsonResponse, parseJsonSafe } from '../utils';
 import { makeCredentialResolver } from '../engine/vault';
 import { randomId } from '../crypto';
+import { chatCompletion, resolveProvider, PROVIDER_DEFAULTS } from '../integrations/providers';
+import type { ProviderId } from '../integrations/providers';
 
 export const credentialRoutes = new Hono<AppEnv>();
 credentialRoutes.use('/credentials*', authMiddleware);
@@ -93,31 +95,30 @@ credentialRoutes.post('/credentials/:id/test', async (c) => {
       const me = await client.getMe();
       ok = true;
       message = `Connected as @${me.username}`;
-    } else if (row.provider === 'openai' || row.provider === 'groq' || row.provider === 'openrouter' || row.provider === 'anthropic') {
-      const { chatCompletion } = await import('../integrations/providers');
-      await chatCompletion({
-        provider: row.provider === 'anthropic' ? 'anthropic' : 'openai',
-        baseUrl: data.baseUrl || undefined,
-        apiKey: data.apiKey || data.token || '',
-        model: data.model || (row.provider === 'groq' ? 'llama-3.1-8b-instant' : row.provider === 'openrouter' ? 'openai/gpt-4o-mini' : 'gpt-4o-mini'),
-        messages: [{ role: 'user', content: 'ping' }],
-        maxTokens: 1,
-      });
-      ok = true;
-      message = `Connected to ${row.provider}`;
     } else if (row.provider === 'zilliz') {
       const { testConnection } = await import('../integrations/zilliz');
       const res = await testConnection({ endpoint: data.endpoint, token: data.token || data.apiKey });
       ok = res.ok;
       message = res.ok ? `Connected to Zilliz (${res.collections?.length ?? 0} collections)` : (res.message || 'Failed');
+    } else if (PROVIDER_DEFAULTS[row.provider]) {
+      const meta = resolveProvider(row.provider);
+      const customHeaders = parseJsonSafe<Record<string, string>>(data.headers || '{}', {});
+      await chatCompletion({
+        provider: row.provider as ProviderId,
+        baseUrl: data.baseUrl || undefined,
+        apiKey: data.apiKey || data.token || '',
+        model: data.model || meta.defaultModel,
+        messages: [{ role: 'user', content: 'ping' }],
+        maxTokens: 1,
+        headers: customHeaders,
+        ai: c.env.AI,
+      });
+      ok = true;
+      message = `Connected to ${PROVIDER_DEFAULTS[row.provider]?.label ?? row.provider}`;
     }
   } catch (e) {
     message = e instanceof Error ? e.message : 'Connection test failed';
   }
-
-  await c.env.DB.prepare(
-    'UPDATE integrations SET last_tested_at = strftime(\'%Y-%m-%dT%H:%M:%fZ\',\'now\'), status = ? WHERE id = ?',
-  ).bind(ok ? 'connected' : 'error', row.id).run().catch(() => undefined);
 
   return jsonResponse({ ok, message });
 });

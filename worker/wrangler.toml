@@ -6,6 +6,14 @@ compatibility_flags = ["nodejs_compat"]
 [observability]
 enabled = true
 
+# Hourly cleanup of public chat history older than 24 hours.
+[triggers]
+crons = ["17 * * * *"]
+
+# Cloudflare Workers AI (server-side; no API key leaves the Worker).
+[ai]
+binding = "AI"
+
 # Serve the built PWA from the same origin as the API (built by flowbot-web).
 [assets]
 directory = "../web/dist"

@@ -18,11 +18,36 @@ export interface ZillizConfig {
 
 const DEFAULT_TIMEOUT = 15_000;
 
+/** Normalize a Zilliz endpoint: trim, add https://, strip trailing slashes. */
+export function normalizeZillizEndpoint(endpoint: string): string {
+  const trimmed = String(endpoint || '').trim();
+  if (!trimmed) return '';
+  const withScheme = /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+  return withScheme.replace(/\/+$/, '');
+}
+
+/** Extract collection names from Zilliz list responses (camelCase or snake_case). */
+export function parseCollectionNames(list: unknown): string[] {
+  if (!Array.isArray(list)) return [];
+  return list
+    .map((item) => {
+      if (typeof item === 'string') return item;
+      if (item && typeof item === 'object') {
+        const o = item as { collectionName?: string; collection_name?: string; name?: string };
+        return o.collectionName ?? o.collection_name ?? o.name ?? '';
+      }
+      return '';
+    })
+    .filter(Boolean);
+}
+
 async function rpc<T>(cfg: ZillizConfig, path: string, payload: Record<string, unknown>): Promise<T> {
+  const base = normalizeZillizEndpoint(cfg.endpoint);
+  if (!base) throw new Error('Zilliz endpoint is not configured');
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), cfg.timeoutMs ?? DEFAULT_TIMEOUT);
   try {
-    const url = `${cfg.endpoint.replace(/\/+$/, '')}${path}`;
+    const url = `${base}${path}`;
     const res = await fetch(url, {
       method: 'POST',
       headers: {
@@ -64,8 +89,8 @@ export interface ZillizCollectionInfo {
 /** Health/connectivity check: list collections (lightweight, no auth leakage). */
 export async function testConnection(cfg: ZillizConfig): Promise<{ ok: boolean; collections?: string[]; message?: string }> {
   try {
-    const list = await rpc<unknown[]>(cfg, '/v2/vectordb/collections/list', { db_name: 'default' });
-    const names = Array.isArray(list) ? list.map((c) => (c as { collection_name?: string }).collection_name ?? String(c)) : [];
+    const list = await rpc<unknown[]>(cfg, '/v2/vectordb/collections/list', { dbName: 'default' });
+    const names = parseCollectionNames(list);
     return { ok: true, collections: names };
   } catch (e) {
     return { ok: false, message: e instanceof Error ? e.message : 'Unknown Zilliz error' };
@@ -78,7 +103,7 @@ export async function createCollection(
 ): Promise<void> {
   const dim = opts.dim ?? 1536;
   await rpc(cfg, '/v2/vectordb/collections/create', {
-    db_name: 'default',
+    dbName: 'default',
     collectionName: opts.name,
     dimension: dim,
     metricType: opts.metricType ?? 'IP',
@@ -107,7 +132,7 @@ export async function search(
     cfg,
     '/v2/vectordb/entities/search',
     {
-      db_name: 'default',
+      dbName: 'default',
       collectionName: req.collectionName,
       data: [req.vector],
       limit,
@@ -144,7 +169,7 @@ export async function insert(
     return entity;
   });
   const result = await rpc<{ insertCount?: number; insertIds?: Array<string | number> }>(cfg, '/v2/vectordb/entities/insert', {
-    db_name: 'default',
+    dbName: 'default',
     collectionName: req.collectionName,
     data: rows,
   });
@@ -154,7 +179,7 @@ export async function insert(
 export async function describeCollection(cfg: ZillizConfig, name: string): Promise<ZillizCollectionInfo | null> {
   try {
     const info = await rpc<ZillizCollectionInfo>(cfg, '/v2/vectordb/collections/describe', {
-      db_name: 'default',
+      dbName: 'default',
       collectionName: name,
     });
     return info;

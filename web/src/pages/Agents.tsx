@@ -138,10 +138,24 @@ function AgentSheet({ agent, onClose, onDone }: { agent: any; onClose: () => voi
       </div>
       <div className="field">
         <label>API credential</label>
-        <select className="select" value={credentialId} onChange={(e) => setCredentialId(e.target.value)}>
-          <option value="">Auto (latest {provider} credential)</option>
-          {credentials.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.provider})</option>)}
-        </select>
+        <div className="flex gap-8">
+          <select className="select" style={{ flex: 1 }} value={credentialId} onChange={(e) => setCredentialId(e.target.value)}>
+            <option value="">Auto (latest {provider} credential)</option>
+            {credentials.map((c) => <option key={c.id} value={c.id}>{c.name} ({c.provider})</option>)}
+          </select>
+          {credentialId && (
+            <button
+              className="btn"
+              type="button"
+              onClick={async () => {
+                try { const r = await credentialsApi.test(credentialId); toast(r.message, r.ok ? 'success' : 'error'); }
+                catch (e) { toast(e instanceof Error ? e.message : 'Test failed', 'error'); }
+              }}
+            >
+              Test
+            </button>
+          )}
+        </div>
         <div className="hint">Add API keys on the <b>Credentials</b> page. Works without one if a provider credential already exists.</div>
       </div>
       <div className="field"><label>Temperature ({temperature.toFixed(1)})</label><input className="input" type="range" min={0} max={2} step={0.1} value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} /></div>

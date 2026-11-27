@@ -4,6 +4,23 @@ import { topoSort, getNodeDefinition, findTrigger } from '@flowbot/shared';
 import { makeCredentialResolver, type CredentialResolver } from './vault';
 import { getExecutor, getPath } from './executors';
 
+const SECRET_KEY_RE = /(token|key|secret|password|authorization|bearer|credential)/i;
+
+/** Recursively redact likely-secret fields before writing execution logs. */
+export function redactForLog(value: unknown, depth = 0): unknown {
+  if (depth > 6) return '[truncated]';
+  if (Array.isArray(value)) return value.map((v) => redactForLog(v, depth + 1));
+  if (value && typeof value === 'object') {
+    const out: Record<string, unknown> = {};
+    for (const [k, v] of Object.entries(value as Record<string, unknown>)) {
+      out[k] = SECRET_KEY_RE.test(k) ? '[redacted]' : redactForLog(v, depth + 1);
+    }
+    return out;
+  }
+  if (typeof value === 'string' && value.length > 2000) return `${value.slice(0, 2000)}…`;
+  return value;
+}
+
 /** Enqueue a background workflow execution via Cloudflare Queues. */
 export async function enqueueExecution(
   env: Env,
@@ -37,7 +54,7 @@ export async function runWorkflowInWorker(
     seq += 1;
     await env.DB.prepare(
       'INSERT INTO execution_logs (id, execution_id, seq, node_id, node_type, level, message, data_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-    ).bind(`el_${crypto.randomUUID()}`, executionId, seq, nodeId, nodeType, level, message, data ? JSON.stringify(data) : '{}').run();
+          ).bind(`el_${crypto.randomUUID()}`, executionId, seq, nodeId, nodeType, level, message, data ? JSON.stringify(redactForLog(data)) : '{}').run();
   };
 
   const finish = async (status: string, error?: string, startedAt = Date.now()) => {

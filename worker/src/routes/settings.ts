@@ -11,7 +11,16 @@ settingRoutes.get('/settings', async (c) => {
     .bind(app.workspace.id).all<{ key: string; value_json: string }>();
   const settings: Record<string, unknown> = {};
   for (const { key, value_json } of results) settings[key] = parseJsonSafe(value_json, null);
-  return jsonResponse({ settings });
+  const endpoint = String(c.env.ZILLIZ_ENDPOINT || c.env.ZILLIZ_URL || '');
+  let zillizEndpointHost = '';
+  try { zillizEndpointHost = endpoint ? new URL(endpoint).host : ''; } catch { zillizEndpointHost = endpoint; }
+  const runtime = {
+    zillizConfigured: Boolean(endpoint && (c.env.ZILLIZ_API_KEY || c.env.ZILLIZ_TOKEN)),
+    zillizCollection: c.env.ZILLIZ_COLLECTION || 'flowbot_chunks',
+    zillizEndpointHost,
+    cloudflareAiAvailable: Boolean(c.env.AI),
+  };
+  return jsonResponse({ settings, runtime });
 });
 
 settingRoutes.put('/settings/:key', async (c) => {
@@ -32,5 +41,5 @@ settingRoutes.get('/settings/about', (c) => c.json({
   email: 'aung.thuyrain.at449@gmail.com',
   location: 'Nay Pyi Taw, Myanmar',
   tiktok: 'https://www.tiktok.com/@amkyaw.dev1',
-  version: '1.0.0',
+    version: '1.2.0',
 }));

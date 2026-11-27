@@ -32,6 +32,8 @@ export type ConfigFieldType =
   | 'json'
   | 'secret'
   | 'credential'
+  | 'bot'
+  | 'agent'
   | 'intent'
   | 'code';
 

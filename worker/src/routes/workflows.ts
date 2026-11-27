@@ -110,8 +110,12 @@ workflowRoutes.delete('/workflows/:id', async (c) => {
 workflowRoutes.get('/workflows/:id/versions', async (c) => {
   const app = c.get('app');
   const { results } = await c.env.DB.prepare(
-    'SELECT id, workflow_id, version, note, created_at FROM workflow_versions WHERE workflow_id = ? ORDER BY version DESC LIMIT 50',
-  ).bind(c.req.param('id')).all();
+    `SELECT v.id, v.workflow_id, v.version, v.note, v.created_at
+     FROM workflow_versions v
+     JOIN workflows w ON w.id = v.workflow_id
+     WHERE v.workflow_id = ? AND w.workspace_id = ?
+     ORDER BY v.version DESC LIMIT 50`,
+  ).bind(c.req.param('id'), app.workspace.id).all();
   return jsonResponse({ versions: results });
 });
 

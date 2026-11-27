@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Workflow, Plus, Trash2, PlayCircle } from 'lucide-react';
+import { Workflow, Plus, Trash2, PlayCircle, Copy } from 'lucide-react';
 import { workflowsApi } from '@/api/client';
 import { Empty, StatusBadge, Loading } from '@/components/ui';
 import { useApp } from '@/store/app';
@@ -57,6 +57,20 @@ export function WorkflowsPage() {
     }
   }
 
+  async function duplicateWorkflow(id: string, e: React.MouseEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    try {
+      const src = await workflowsApi.get(id);
+      const created = await workflowsApi.create({ name: `${src.workflow.name} (copy)` });
+      await workflowsApi.save(created.workflow.id, { graph: src.workflow.graph });
+      toast('Workflow duplicated', 'success');
+      void load();
+    } catch (err) {
+      toast(err instanceof Error ? err.message : 'Duplicate failed', 'error');
+    }
+  }
+
   if (workflows === null) return <Loading />;
 
   return (
@@ -79,6 +93,7 @@ export function WorkflowsPage() {
               </div>
               <StatusBadge status={w.status || 'draft'} />
               <button className="btn-icon btn-ghost" onClick={(e) => runWorkflow(w.id, e)} aria-label="Run"><PlayCircle size={19} /></button>
+              <button className="btn-icon btn-ghost" onClick={(e) => duplicateWorkflow(w.id, e)} aria-label="Duplicate"><Copy size={17} /></button>
               <button className="btn-icon btn-ghost" style={{ color: 'var(--red)' }} onClick={(e) => removeWorkflow(w.id, e)} aria-label="Delete"><Trash2 size={18} /></button>
             </Link>
           ))}

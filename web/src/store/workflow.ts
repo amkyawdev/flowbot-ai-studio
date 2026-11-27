@@ -3,9 +3,12 @@ import type { Node, Edge, OnConnect, OnNodesChange, OnEdgesChange } from '@xyflo
 import { applyNodeChanges, applyEdgeChanges, addEdge } from '@xyflow/react';
 import { getNodeDefinition } from '@flowbot/shared';
 import { uuid } from '@flowbot/shared';
-import { workflowsApi } from '@/api/client';
+import { workflowsApi, executionsApi } from '@/api/client';
 
-const AUTOSAVE_KEY = 'flowbot_autosave';
+const LEGACY_AUTOSAVE_KEY = 'flowbot_autosave';
+const autosaveKey = (id: string) => `flowbot_autosave:${id}`;
+
+export type RunStatus = 'idle' | 'queued' | 'running' | 'success' | 'error' | 'stopped';
 
 interface WorkflowState {
   id: string | null;
@@ -15,7 +18,10 @@ interface WorkflowState {
   selectedNodeId: string | null;
   libraryOpen: boolean;
   running: boolean;
-  runResult: any | null;
+  executionId: string | null;
+  runStatus: RunStatus;
+  runLogs: any[];
+  runError: string | null;
   saving: boolean;
   savedAt: number | null;
 
@@ -29,6 +35,7 @@ interface WorkflowState {
   onNodesChange: OnNodesChange;
   onEdgesChange: OnEdgesChange;
   onConnect: OnConnect;
+  pushHistory: () => void;
   addNode: (type: string, position: { x: number; y: number }) => void;
   selectNode: (id: string | null) => void;
   updateNodeData: (id: string, data: Record<string, unknown>) => void;
@@ -40,14 +47,16 @@ interface WorkflowState {
   redo: () => void;
   save: () => Promise<void>;
   autosave: () => Promise<void>;
-  run: () => Promise<void>;
-  stop: () => void;
+  run: (input?: Record<string, unknown>) => Promise<void>;
+  stop: () => Promise<void>;
   setName: (name: string) => void;
-  hydrateFromStorage: () => boolean;
+  hydrateFromStorage: (id?: string) => boolean;
+  replaceGraph: (payload: { name?: string; nodes: Node[]; edges: Edge[] }) => void;
   clearRun: () => void;
 }
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
+let runPollToken = 0;
 
 function snapshot(nodes: Node[], edges: Edge[]) {
   return { nodes: structuredClone(nodes), edges: structuredClone(edges) };
@@ -67,7 +76,10 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
     selectedNodeId: null,
     libraryOpen: false,
     running: false,
-    runResult: null,
+    executionId: null,
+    runStatus: 'idle',
+    runLogs: [],
+    runError: null,
     saving: false,
     savedAt: null,
     past: [],
@@ -75,12 +87,16 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
 
     setName(name) { set({ name }); },
 
-    hydrateFromStorage() {
+    hydrateFromStorage(id) {
       try {
-        const raw = localStorage.getItem(AUTOSAVE_KEY);
+        const raw = localStorage.getItem(id ? autosaveKey(id) : LEGACY_AUTOSAVE_KEY);
         if (!raw) return false;
         const data = JSON.parse(raw);
-        set({ nodes: data?.nodes ?? [], edges: data?.edges ?? [], name: data?.name ?? data?.id ? get().name : 'Untitled workflow' });
+        set({
+          nodes: data?.nodes ?? [],
+          edges: data?.edges ?? [],
+          name: typeof data?.name === 'string' && data.name ? data.name : get().name,
+        });
         return (data?.nodes?.length ?? 0) > 0;
       } catch {
         return false;
@@ -110,6 +126,7 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
         edges,
         past: [], future: [],
         selectedNodeId: null,
+        runStatus: 'idle', runLogs: [], runError: null, executionId: null,
       });
     },
 
@@ -117,10 +134,13 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
     setEdges(edges) { set({ edges }); },
 
     onNodesChange(changes) {
+      // Keyboard delete and multi-delete go through here; make them undoable.
+      if (changes.some((c) => c.type === 'remove')) pushHistory(get().nodes, get().edges);
       set((s) => ({ nodes: applyNodeChanges(changes, s.nodes) }));
     },
 
     onEdgesChange(changes) {
+      if (changes.some((c) => c.type === 'remove')) pushHistory(get().nodes, get().edges);
       set((s) => ({ edges: applyEdgeChanges(changes, s.edges) }));
     },
 
@@ -128,6 +148,8 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
       pushHistory(get().nodes, get().edges);
       set((s) => ({ edges: addEdge({ ...connection, id: `e_${uuid()}` }, s.edges) }));
     },
+
+    pushHistory() { pushHistory(get().nodes, get().edges); },
 
     addNode(type, position) {
       pushHistory(get().nodes, get().edges);
@@ -145,6 +167,7 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
     selectNode(id) { set({ selectedNodeId: id }); },
 
     updateNodeData(id, data) {
+      pushHistory(get().nodes, get().edges);
       set((s) => ({
         nodes: s.nodes.map((n) => (n.id === id ? { ...n, data: { ...n.data, ...data } } : n)),
       }));
@@ -177,7 +200,7 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
       const { id } = get();
       if (!id) return;
       await workflowsApi.remove(id);
-      localStorage.removeItem(AUTOSAVE_KEY);
+      localStorage.removeItem(autosaveKey(id));
       set({ id: null, nodes: [], edges: [], past: [], future: [] });
     },
 
@@ -227,32 +250,58 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
 
     async autosave() {
       const { id, name, nodes, edges } = get();
-      localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({ name, nodes, edges }));
+      if (id) localStorage.setItem(autosaveKey(id), JSON.stringify({ name, nodes, edges }));
       if (saveTimer) clearTimeout(saveTimer);
-      saveTimer = setTimeout(() => void get().save(), 1200);
+      saveTimer = setTimeout(() => { void get().save().catch(() => undefined); }, 1200);
     },
 
-    async run() {
-      const { id, nodes, edges, name } = get();
+    async run(input = {}) {
+      const { id } = get();
       if (!id) return;
-      set({ running: true, runResult: null });
+      const token = ++runPollToken;
+      set({ running: true, runStatus: 'queued', runLogs: [], runError: null, executionId: null });
       try {
-        const res = await workflowsApi.run(id, {
-          input: { __values: Object.fromEntries(nodes.map((n) => [n.id, n.data])) },
-          async: false,
-        });
-        set({ runResult: res, running: false });
+        const res = await workflowsApi.run(id, { input, async: true }) as { executionId?: string; status?: string };
+        const execId = res?.executionId ?? null;
+        if (!execId) throw new Error('No execution id returned');
+        set({ executionId: execId, runStatus: (res.status as RunStatus) || 'queued' });
+
+        for (let i = 0; i < 150; i++) {
+          await new Promise((r) => setTimeout(r, 800));
+          if (token !== runPollToken) return;
+          const detail = await executionsApi.get(execId);
+          const status = detail.execution.status as RunStatus;
+          set({ runLogs: detail.logs, runStatus: status });
+          if (status === 'success' || status === 'error' || status === 'stopped') {
+            set({
+              running: false,
+              runError: status === 'error' ? (detail.execution.error_message || 'Execution failed') : null,
+            });
+            return;
+          }
+        }
+        set({ running: false, runStatus: 'error', runError: 'Timed out waiting for the execution to finish.' });
       } catch (e) {
-        set({ running: false, runResult: { error: e instanceof Error ? e.message : 'Run failed' } });
+        set({ running: false, runStatus: 'error', runError: e instanceof Error ? e.message : 'Run failed' });
         throw e;
-      } finally {
-        // Remove run-specific name reference if unused.
-        void name;
       }
     },
 
-    stop() { set({ running: false }); },
+    async stop() {
+      const { executionId } = get();
+      runPollToken += 1;
+      if (executionId) {
+        try { await executionsApi.stop(executionId); } catch { /* ignore */ }
+      }
+      set({ running: false, runStatus: 'stopped' });
+    },
 
-    clearRun() { set({ runResult: null }); },
+    replaceGraph({ name, nodes, edges }) {
+      pushHistory(get().nodes, get().edges);
+      set({ nodes, edges, name: name ?? get().name, selectedNodeId: null });
+      void get().autosave();
+    },
+
+    clearRun() { set({ runStatus: 'idle', runLogs: [], runError: null, executionId: null }); },
   };
 });

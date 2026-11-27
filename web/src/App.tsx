@@ -2,11 +2,13 @@ import { useEffect } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useApp } from '@/store/app';
 import { BottomNav, SideNav } from '@/components/Nav';
-import { Toasts, Loading } from '@/components/ui';
+import { Toasts } from '@/components/ui';
+import { LoadingScreen } from '@/components/LoadingScreen';
 import { LoginPage } from '@/pages/Login';
 import { DashboardPage } from '@/pages/Dashboard';
 import { WorkflowsPage } from '@/pages/Workflows';
 import { WorkflowEditorPage } from '@/pages/WorkflowEditor';
+import { ChatPage } from '@/pages/Chat';
 import { BotsPage } from '@/pages/Bots';
 import { IntegrationsPage } from '@/pages/Integrations';
 import { AgentsPage } from '@/pages/Agents';
@@ -19,7 +21,7 @@ export default function App() {
   return (
     <>
       {!ready ? (
-        <div className="app"><Loading /></div>
+        <LoadingScreen />
       ) : user ? (
         <div className="app">
           <SideNav />
@@ -27,7 +29,8 @@ export default function App() {
             <Routes>
               <Route path="/" element={<DashboardPage />} />
               <Route path="/workflows" element={<WorkflowsPage />} />
-              <Route path="/workflows/:id" element={<WorkflowEditorPage />} />
+                              <Route path="/workflows/:id" element={<WorkflowEditorPage />} />
+                <Route path="/chat" element={<ChatPage />} />
               <Route path="/bots" element={<BotsPage />} />
               <Route path="/integrations" element={<IntegrationsPage />} />
               <Route path="/agents" element={<AgentsPage />} />

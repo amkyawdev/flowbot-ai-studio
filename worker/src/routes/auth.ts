@@ -1,9 +1,21 @@
 import { Hono } from 'hono';
 import type { Env } from '../types';
-import { hashPassword, randomId, randomToken, sha256Hex } from '../crypto';
+import { hashPassword, randomId, randomToken, sha256Hex, timingSafeEqual } from '../crypto';
 import { AppEnv, authMiddleware, jsonResponse, workspaceForUser } from '../utils';
 
 const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000; // 30 days
+const LOGIN_MAX_FAILS = 10;
+const LOGIN_WINDOW_SECONDS = 15 * 60;
+
+function loginKey(c: { req: { header(name: string): string | undefined } }, email: string): string {
+  const ip = c.req.header('CF-Connecting-IP') || c.req.header('x-forwarded-for') || 'unknown';
+  return `login_fail:${ip}:${email}`;
+}
+
+async function bumpLoginFailure(kv: KVNamespace, key: string): Promise<void> {
+  const current = Number(await kv.get(key)) || 0;
+  await kv.put(key, String(current + 1), { expirationTtl: LOGIN_WINDOW_SECONDS });
+}
 
 export const authRoutes = new Hono<AppEnv>();
 
@@ -32,13 +44,30 @@ authRoutes.post('/auth/login', async (c) => {
   const body = await c.req.json().catch(() => ({}));
   const email = String(body?.email || '').trim().toLowerCase();
   const password = String(body?.password || '');
+
+  const key = loginKey(c, email);
+  const fails = Number(await c.env.KV.get(key)) || 0;
+  if (fails >= LOGIN_MAX_FAILS) {
+    return new Response(JSON.stringify({ error: 'Too many sign-in attempts. Try again later.' }), {
+      status: 429,
+      headers: { 'Content-Type': 'application/json', 'Retry-After': String(LOGIN_WINDOW_SECONDS) },
+    });
+  }
+
   const user = await c.env.DB.prepare(
     'SELECT id, email, display_name, password_hash, password_salt FROM users WHERE email = ?',
   ).bind(email).first<{ id: string; email: string; display_name: string; password_hash: string; password_salt: string }>();
-  if (!user) return jsonResponse({ error: 'Invalid email or password' }, 401);
+  if (!user) {
+    await bumpLoginFailure(c.env.KV, key);
+    return jsonResponse({ error: 'Invalid email or password' }, 401);
+  }
 
   const hash = await hashPassword(password, user.password_salt);
-  if (hash !== user.password_hash) return jsonResponse({ error: 'Invalid email or password' }, 401);
+  if (!timingSafeEqual(hash, user.password_hash)) {
+    await bumpLoginFailure(c.env.KV, key);
+    return jsonResponse({ error: 'Invalid email or password' }, 401);
+  }
+  await c.env.KV.delete(key).catch(() => undefined);
 
   const token = randomToken(32);
   const tokenHash = await sha256Hex(token);

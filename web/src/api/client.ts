@@ -27,7 +27,7 @@ export interface ApiError {
   issues?: unknown[];
 }
 
-export async function api<T>(path: string, opts: { method?: string; body?: unknown; auth?: boolean } = {}): Promise<T> {
+export async function api<T>(path: string, opts: { method?: string; body?: unknown; auth?: boolean; signal?: AbortSignal } = {}): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (opts.auth !== false) {
     const token = localStorage.getItem('flowbot_token');
@@ -37,6 +37,7 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
     method: opts.method || 'GET',
     headers,
     body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    signal: opts.signal,
   });
   let data: unknown = null;
   let parsed = false;
@@ -116,11 +117,93 @@ export const agentsApi = {
 };
 
 export const settingsApi = {
-  get: () => api<{ settings: Record<string, unknown> }>('/api/settings'),
+  get: () => api<{
+    settings: Record<string, unknown>;
+    runtime?: { zillizConfigured: boolean; zillizCollection: string; zillizEndpointHost: string; cloudflareAiAvailable: boolean };
+  }>('/api/settings'),
   put: (key: string, value: unknown) => api(`/api/settings/${key}`, { method: 'PUT', body: { value } }),
   about: () => api<Record<string, string>>('/api/settings/about'),
 };
 
+export const zillizApi = {
+  status: () => api<{ configured: boolean; endpointHost: string; collection: string }>('/api/zilliz/status'),
+  test: () => api<{ ok: boolean; message?: string; collections?: string[] }>('/api/zilliz/test', { method: 'POST' }),
+};
+
 export const dashboardApi = {
   get: () => api<{ stats: any; recentExecutions: any[]; recentWorkflows: any[] }>('/api/dashboard'),
+};
+
+// ----------------------------- Chat -----------------------------
+
+export interface ChatConversation {
+  id: string;
+  title: string;
+  archived: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'user' | 'assistant' | 'system';
+  content: string;
+  usage?: { promptTokens?: number; completionTokens?: number; totalTokens?: number } | null;
+  createdAt: string;
+}
+
+export interface ChatConfig {
+  configured: boolean;
+  cloudflareAvailable: boolean;
+  providers: { id: string; label: string; defaultModel: string; requiresCredential: boolean }[];
+  credentials: { id: string; name: string; provider: string }[];
+}
+
+export interface PublicMessage {
+  id: string;
+  userId: string;
+  displayName: string;
+  content: string;
+  createdAt: string;
+}
+
+export interface ActiveUser {
+  userId: string;
+  displayName: string;
+  lastSeen: string;
+}
+
+export interface SendChatBody {
+  content: string;
+  provider: string;
+  model: string;
+  credentialId?: string;
+  systemPrompt?: string;
+  temperature?: number;
+  maxTokens?: number;
+}
+
+export const chatApi = {
+  config: () => api<ChatConfig>('/api/chat/config'),
+  listConversations: (q?: string) =>
+    api<{ conversations: ChatConversation[] }>(`/api/conversations${q ? `?q=${encodeURIComponent(q)}` : ''}`),
+  createConversation: (title?: string) =>
+    api<{ conversation: ChatConversation }>('/api/conversations', { method: 'POST', body: { title } }),
+  renameConversation: (id: string, title: string) =>
+    api(`/api/conversations/${id}`, { method: 'PATCH', body: { title } }),
+  archiveConversation: (id: string, archived: boolean) =>
+    api(`/api/conversations/${id}`, { method: 'PATCH', body: { archived } }),
+  deleteConversation: (id: string) => api(`/api/conversations/${id}`, { method: 'DELETE' }),
+  messages: (id: string) => api<{ messages: ChatMessage[] }>(`/api/conversations/${id}/messages`),
+  send: (id: string, body: SendChatBody, signal?: AbortSignal) =>
+    api<{ userMessage: ChatMessage; assistantMessage: ChatMessage }>(`/api/conversations/${id}/messages`, { method: 'POST', body, signal }),
+  regenerate: (id: string, body: Omit<SendChatBody, 'content'>, signal?: AbortSignal) =>
+    api<{ assistantMessage: ChatMessage }>(`/api/conversations/${id}/regenerate`, { method: 'POST', body, signal }),
+};
+
+export const publicApi = {
+  messages: () => api<{ messages: PublicMessage[]; activeUsers: ActiveUser[] }>('/api/public/messages'),
+  send: (content: string) =>
+    api<{ message: PublicMessage; activeUsers: ActiveUser[] }>('/api/public/messages', { method: 'POST', body: { content } }),
+  presence: () => api<{ activeUsers: ActiveUser[] }>('/api/public/presence', { method: 'POST' }),
 };

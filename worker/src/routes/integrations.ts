@@ -6,6 +6,30 @@ import { randomId } from '../crypto';
 
 export const integrationRoutes = new Hono<AppEnv>();
 integrationRoutes.use('/integrations*', authMiddleware);
+integrationRoutes.use('/zilliz*', authMiddleware);
+
+/** Runtime Zilliz status (never returns the token or full endpoint). */
+integrationRoutes.get('/zilliz/status', (c) => {
+  const endpoint = String(c.env.ZILLIZ_ENDPOINT || c.env.ZILLIZ_URL || '');
+  let endpointHost = '';
+  try { endpointHost = endpoint ? new URL(endpoint).host : ''; } catch { endpointHost = endpoint; }
+  return jsonResponse({
+    configured: Boolean(endpoint && (c.env.ZILLIZ_API_KEY || c.env.ZILLIZ_TOKEN)),
+    endpointHost,
+    collection: c.env.ZILLIZ_COLLECTION || 'flowbot_chunks',
+  });
+});
+
+/** Test the instance-level Zilliz configuration (env secrets). */
+integrationRoutes.post('/zilliz/test', async (c) => {
+  const endpoint = String(c.env.ZILLIZ_ENDPOINT || c.env.ZILLIZ_URL || '').trim();
+  const token = String(c.env.ZILLIZ_API_KEY || c.env.ZILLIZ_TOKEN || '').trim();
+  if (!endpoint || !token) {
+    return jsonResponse({ ok: false, message: 'Zilliz is not configured. Set ZILLIZ_ENDPOINT and ZILLIZ_API_KEY.' });
+  }
+  const { testConnection } = await import('../integrations/zilliz');
+  return jsonResponse(await testConnection({ endpoint, token }));
+});
 
 integrationRoutes.get('/integrations', async (c) => {
   const app = c.get('app');
@@ -100,15 +124,15 @@ integrationRoutes.post('/integrations/:id/test', async (c) => {
       message = res.ok ? `Connected — ${res.toolCount ?? 0} tools available` : (res.error || 'MCP connection failed');
     } else if (row.type === 'zilliz') {
       const { testConnection } = await import('../integrations/zilliz');
-      let apiKey = c.env.ZILLIZ_API_KEY;
-      let endpoint = String(cfg.endpoint || c.env.ZILLIZ_ENDPOINT || '');
+      let apiKey = c.env.ZILLIZ_API_KEY || c.env.ZILLIZ_TOKEN;
+      let endpoint = String(cfg.endpoint || c.env.ZILLIZ_ENDPOINT || c.env.ZILLIZ_URL || '');
       if (row.secret_enc) {
         const resolver = makeCredentialResolver(c.env, app.workspace.id);
         const secret = JSON.parse(await resolver.decrypt(row.secret_enc)) as { value?: string };
         if (secret.value) apiKey = secret.value;
       }
       if (!endpoint || !apiKey) {
-        message = 'Zilliz is not configured — set ZILLIZ_ENDPOINT and ZILLIZ_API_KEY as Worker secrets.';
+        message = 'Zilliz is not configured — set ZILLIZ_ENDPOINT (variable or secret) and ZILLIZ_API_KEY (secret).';
       } else {
         const res = await testConnection({ endpoint, token: apiKey });
         ok = res.ok;

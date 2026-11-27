@@ -81,17 +81,54 @@ export async function authMiddleware(c: Context<AppEnv>, next: Next): Promise<Re
   await next();
 }
 
-export function corsHeaders(env: Env): Record<string, string> {
-  const allowed = (env.CORS_ORIGINS || 'http://localhost:5173,http://localhost:8100')
+export function corsHeaders(env: Env, origin?: string | null): Record<string, string> {
+  const configured = (env.CORS_ORIGINS || '')
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
-  // Reflect single Origin when allowed, else fall back to first allowed.
-  return {
-    'Access-Control-Allow-Origin': '*',
+  const defaults = [
+    'https://flowbot-ai-studio.amkyaw-dev.workers.dev',
+    'https://localhost',
+    'http://localhost',
+    'capacitor://localhost',
+    'http://localhost:5173',
+    'http://localhost:8100',
+  ];
+  let appOrigin = '';
+  try { if (env.APP_BASE_URL) appOrigin = new URL(env.APP_BASE_URL).origin; } catch { /* ignore */ }
+  const allowed = new Set([...defaults, ...(appOrigin ? [appOrigin] : []), ...configured]);
+
+  const headers: Record<string, string> = {
     'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Vary': 'Origin',
+  };
+  // Reflect only allowed origins. Same-origin requests need no ACAO header.
+  if (origin && allowed.has(origin)) headers['Access-Control-Allow-Origin'] = origin;
+  else if (!origin) headers['Access-Control-Allow-Origin'] = '*';
+  return headers;
+}
+
+/** Baseline security headers applied to every response. */
+export function securityHeaders(): Record<string, string> {
+  return {
+    'X-Content-Type-Options': 'nosniff',
+    'Referrer-Policy': 'no-referrer',
+    'X-Frame-Options': 'DENY',
+    'Permissions-Policy': 'geolocation=(), microphone=(), camera=()',
+    'Cross-Origin-Opener-Policy': 'same-origin',
+    'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+    'Content-Security-Policy': [
+      "default-src 'self'",
+      "script-src 'self'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data:",
+      "font-src 'self' data:",
+      "connect-src 'self'",
+      "frame-ancestors 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+    ].join('; '),
   };
 }
 

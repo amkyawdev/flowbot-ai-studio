@@ -4,6 +4,8 @@ export interface Env {
   DB: D1Database;
   KV: KVNamespace;
   R2: R2Bucket;
+  /** Cloudflare Workers AI binding (server-side only). */
+  AI: Ai;
   /** Built PWA served from the same Worker (web/dist). */
   ASSETS: Fetcher;
   EXECUTION_QUEUE: Queue<QueueMessage>;
@@ -12,8 +14,12 @@ export interface Env {
   APP_BASE_URL?: string;
   CORS_ORIGINS?: string;
   ZILLIZ_ENDPOINT?: string;
+  /** Alias accepted for convenience (same value as ZILLIZ_ENDPOINT). */
+  ZILLIZ_URL?: string;
   /** Canonical Zilliz credential (Worker secret). Never exposed to the client. */
   ZILLIZ_API_KEY?: string;
+  /** Alias accepted for convenience (same value as ZILLIZ_API_KEY). */
+  ZILLIZ_TOKEN?: string;
   ZILLIZ_COLLECTION?: string;
   TELEGRAM_API_URL?: string;
 }

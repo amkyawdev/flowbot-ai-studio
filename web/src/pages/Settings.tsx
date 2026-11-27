@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { Info, Shield, Cpu } from 'lucide-react';
-import { settingsApi } from '@/api/client';
+import { Info, Shield, Cpu, Database } from 'lucide-react';
+import { settingsApi, zillizApi } from '@/api/client';
 import { Loading, StatusBadge } from '@/components/ui';
 import { useApp } from '@/store/app';
 
@@ -9,11 +9,12 @@ export function SettingsPage() {
   const user = useApp((s) => s.user);
   const [about, setAbout] = useState<any>(null);
   const [config, setConfig] = useState<Record<string, unknown>>({});
+  const [runtime, setRuntime] = useState<any>(null);
   const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
     Promise.all([settingsApi.about(), settingsApi.get()])
-      .then(([a, s]) => { setAbout(a); setConfig(s.settings); setLoaded(true); })
+      .then(([a, s]) => { setAbout(a); setConfig(s.settings); setRuntime(s.runtime ?? null); setLoaded(true); })
       .catch((e) => { toast(e.message, 'error'); setLoaded(true); });
   }, []);
 
@@ -45,10 +46,42 @@ export function SettingsPage() {
       </div>
 
       <div className="card" style={{ marginBottom: 16 }}>
+        <div className="flex gap-8" style={{ marginBottom: 10 }}><Database size={18} color="var(--brand-bright)" /><h3>Zilliz vector store</h3></div>
+        <div className="flex gap-8" style={{ marginBottom: 8 }}>
+          <StatusBadge status={runtime?.zillizConfigured ? 'connected' : 'inactive'} />
+          <span className="small dim">
+            {runtime?.zillizConfigured
+              ? `Configured · collection ${runtime?.zillizCollection || 'flowbot_chunks'}`
+              : 'Not configured — vector nodes degrade gracefully'}
+          </span>
+        </div>
+        {runtime?.zillizConfigured && runtime?.zillizEndpointHost && (
+          <div className="hint" style={{ marginBottom: 8 }}>Endpoint host: {runtime.zillizEndpointHost}</div>
+        )}
+        <button
+          className="btn"
+          onClick={async () => {
+            try {
+              const r = await zillizApi.test();
+              toast(r.message || (r.ok ? 'Connected to Zilliz' : 'Zilliz test failed'), r.ok ? 'success' : 'error');
+            } catch (e) {
+              toast(e instanceof Error ? e.message : 'Zilliz test failed', 'error');
+            }
+          }}
+        >
+          Test connection
+        </button>
+      </div>
+
+      <div className="card" style={{ marginBottom: 16 }}>
         <div className="flex gap-8" style={{ marginBottom: 10 }}><Cpu size={18} color="var(--green)" /><h3>Runtime feature flags</h3></div>
+        <div className="flex gap-8" style={{ marginBottom: 6 }}>
+          <StatusBadge status={runtime?.cloudflareAiAvailable ? 'connected' : 'inactive'} />
+          <span className="small dim">{runtime?.cloudflareAiAvailable ? 'Cloudflare Workers AI binding available' : 'Cloudflare Workers AI not available'}</span>
+        </div>
         <div className="flex gap-8">
-          <StatusBadge status={config.zillizConfigured ? 'connected' : 'inactive'} />
-          <span className="small dim">{config.zillizConfigured ? 'Zilliz vector store configured' : 'Zilliz not configured — vector nodes degrade gracefully'}</span>
+          <StatusBadge status={runtime?.zillizConfigured ? 'connected' : 'inactive'} />
+          <span className="small dim">{runtime?.zillizConfigured ? 'Zilliz configured' : 'Zilliz not configured'}</span>
         </div>
       </div>
 

@@ -2,15 +2,16 @@ import { useEffect, useState } from 'react';
 import { KeyRound, Plus, Trash2, Eye, EyeOff, ShieldCheck } from 'lucide-react';
 import { credentialsApi } from '@/api/client';
 import { Empty, Sheet, Loading } from '@/components/ui';
+import { Combobox } from '@/components/Combobox';
 import { useApp } from '@/store/app';
 
 const PROVIDERS = [
-  { value: 'openai', label: 'OpenAI', fields: ['apiKey', 'baseUrl'] },
-  { value: 'groq', label: 'Groq', fields: ['apiKey'] },
-  { value: 'openrouter', label: 'OpenRouter', fields: ['apiKey', 'baseUrl'] },
-  { value: 'gemini', label: 'Google Gemini', fields: ['apiKey'] },
-  { value: 'anthropic', label: 'Anthropic', fields: ['apiKey', 'baseUrl'] },
-  { value: 'openai-compatible', label: 'Custom OpenAI-compatible', fields: ['apiKey', 'baseUrl', 'model'] },
+  { value: 'openai', label: 'OpenAI', fields: ['apiKey', 'baseUrl', 'headers'] },
+  { value: 'groq', label: 'Groq', fields: ['apiKey', 'headers'] },
+  { value: 'openrouter', label: 'OpenRouter', fields: ['apiKey', 'baseUrl', 'headers'] },
+  { value: 'gemini', label: 'Google Gemini', fields: ['apiKey', 'headers'] },
+  { value: 'anthropic', label: 'Anthropic', fields: ['apiKey', 'baseUrl', 'headers'] },
+  { value: 'openai-compatible', label: 'Custom OpenAI-compatible', fields: ['apiKey', 'baseUrl', 'model', 'headers'] },
   { value: 'telegram', label: 'Telegram (bot token)', fields: ['token'] },
 ];
 
@@ -108,20 +109,45 @@ function CreateCredentialSheet({ open, onClose, onSave }: { open: boolean; onClo
   return (
     <Sheet open={open} onClose={onClose} title="Add credential">
       <div className="field">
-        <label>Provider</label>
-        <select className="select" value={provider.value} onChange={(e) => changeProvider(PROVIDERS.find((p) => p.value === e.target.value)!)}>
-          {PROVIDERS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
-        </select>
+        <label htmlFor="cred-provider">Provider</label>
+        <Combobox
+          id="cred-provider"
+          value={provider.value}
+          options={PROVIDERS.map((p) => ({ value: p.value, label: p.label }))}
+          onChange={(v) => changeProvider(PROVIDERS.find((p) => p.value === v)!)}
+          allowEmpty={false}
+          ariaLabel="Provider"
+        />
       </div>
-      <div className="field"><label>Name</label><input className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder={provider.label} /></div>
+      <div className="field"><label htmlFor="cred-name">Name</label><input id="cred-name" className="input" value={name} onChange={(e) => setName(e.target.value)} placeholder={provider.label} /></div>
       {provider.fields.map((f) => (
         <div className="field" key={f}>
-          <label>{f}</label>
-          <div className="flex gap-8">
-            <input className="input mono" style={{ flex: 1 }} type={show ? 'text' : 'password'} value={values[f] ?? ''} onChange={(e) => setField(f, e.target.value)} />
-            <button className="btn-icon btn-ghost" type="button" onClick={() => setShow((v) => !v)} aria-label="Toggle visibility">{show ? <EyeOff size={18} /> : <Eye size={18} />}</button>
-          </div>
+          <label htmlFor={`cred-${f}`}>{f}</label>
+          {f === 'headers' ? (
+            <textarea
+              id={`cred-${f}`}
+              className="textarea mono"
+              rows={3}
+              value={values[f] ?? ''}
+              onChange={(e) => setField(f, e.target.value)}
+              placeholder='{"X-Custom-Header":"value"}'
+            />
+          ) : (
+            <div className="flex gap-8">
+              <input
+                id={`cred-${f}`}
+                className="input mono"
+                style={{ flex: 1 }}
+                type={show ? 'text' : 'password'}
+                value={values[f] ?? ''}
+                onChange={(e) => setField(f, e.target.value)}
+              />
+              <button className="btn-icon btn-ghost" type="button" onClick={() => setShow((v) => !v)} aria-label="Toggle visibility">{show ? <EyeOff size={18} /> : <Eye size={18} />}</button>
+            </div>
+          )}
           {f === 'baseUrl' && <div className="hint">Leave blank for the default endpoint.</div>}
+          {f === 'headers' && <div className="hint">Optional JSON headers, stored encrypted and sent server-side only.</div>}
+          {f === 'model' && <div className="hint">Default model id for this credential (optional).</div>}
         </div>
       ))}
       <button className="btn btn-primary btn-block" disabled={busy} onClick={() => void save()}>{busy ? <span className="spinner" /> : <ShieldCheck size={17} />} Encrypt & save</button>

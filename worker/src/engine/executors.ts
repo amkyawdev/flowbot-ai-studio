@@ -2,7 +2,8 @@ import type { FlowNode } from '@flowbot/shared';
 import { renderTemplate, getPath, setPath } from '@flowbot/shared';
 import type { NodeExecutionContext, NodeExecutor, NodeExecutorResult } from '../types';
 import { httpRequest } from '../integrations/http';
-import { chatCompletion, embedTexts } from '../integrations/providers';
+import { chatCompletion, embedTexts, resolveProvider } from '../integrations/providers';
+import type { ProviderId } from '../integrations/providers';
 import { TelegramClient } from '../integrations/telegram';
 import * as zilliz from '../integrations/zilliz';
 
@@ -44,6 +45,13 @@ function parseJsonish(v: string): Record<string, unknown> {
   } catch {
     return {};
   }
+}
+
+/** Decode optional custom headers stored (encrypted) with a credential. */
+function credentialHeaders(cred: Record<string, string>): Record<string, string> | undefined {
+  if (!cred.headers) return undefined;
+  const parsed = parseJsonish(cred.headers);
+  return Object.fromEntries(Object.entries(parsed).map(([k, v]) => [k, String(v)]));
 }
 
 export const executors: Record<string, NodeExecutor> = {
@@ -106,11 +114,14 @@ export const executors: Record<string, NodeExecutor> = {
       const input = await resolveString(ctx, node, cfg.input, ctx.output('input'));
       const credential = await ctx.vaultForAgent(agent);
       const agentBaseUrl = String((agent.base_url as string) || '');
+      const agentProvider = String(agent.provider || 'openai') as ProviderId;
       const result = await withTimeout(90_000, () => chatCompletion({
-        provider: String(agent.provider || 'openai') as 'openai' | 'gemini' | 'anthropic',
+        provider: agentProvider,
         apiKey: credential.apiKey || credential.token || '',
         baseUrl: agentBaseUrl || credential.baseUrl || undefined,
-        model: String(agent.model || ''),
+        model: String(agent.model || '') || resolveProvider(agentProvider).defaultModel,
+        headers: credentialHeaders(credential),
+        ai: ctx.env.AI,
         messages: [
           { role: 'system', content: String(agent.system_prompt || '') },
           { role: 'user', content: input || '' },
@@ -134,9 +145,11 @@ export const executors: Record<string, NodeExecutor> = {
       messages.push({ role: 'user', content: prompt });
       const result = await withTimeout(90_000, () => chatCompletion({
         provider: 'openai',
-        baseUrl: cred.baseUrl || undefined,
+        baseUrl: String(cfg.baseUrl || cred.baseUrl || '') || undefined,
         apiKey: cred.apiKey || cred.token || '',
-        model: String(cfg.model || ''),
+        model: String(cfg.model || '') || 'gpt-4o-mini',
+        headers: credentialHeaders(cred),
+        ai: ctx.env.AI,
         messages,
         temperature: Number(cfg.temperature ?? 0.7),
         maxTokens: Number(cfg.maxTokens ?? 1024),
@@ -159,9 +172,31 @@ export const executors: Record<string, NodeExecutor> = {
         provider: 'gemini',
         apiKey: cred.apiKey || cred.token || '',
         model: String(cfg.model || 'gemini-2.0-flash'),
+        headers: credentialHeaders(cred),
+        ai: ctx.env.AI,
         messages,
         temperature: Number(cfg.temperature ?? 0.7),
       }), 'Gemini');
+      return { outputs: { text: result.text, usage: result.usage ?? {} } };
+    },
+  },
+
+  cloudflareAI: {
+    async execute(ctx, node) {
+      const cfg = node.data;
+      const prompt = await resolveString(ctx, node, cfg.prompt, ctx.output('prompt'));
+      const sys = String(cfg.system || '').trim();
+      const messages: Array<{ role: 'system' | 'user'; content: string }> = [];
+      if (sys) messages.push({ role: 'system', content: renderTemplate(sys, buildCtx(ctx, node)) });
+      messages.push({ role: 'user', content: prompt });
+      const result = await withTimeout(90_000, () => chatCompletion({
+        provider: 'cloudflare',
+        ai: ctx.env.AI,
+        model: String(cfg.model || '@cf/meta/llama-3.1-8b-instruct'),
+        messages,
+        temperature: Number(cfg.temperature ?? 0.7),
+        maxTokens: Number(cfg.maxTokens ?? 1024),
+      }), 'Cloudflare AI');
       return { outputs: { text: result.text, usage: result.usage ?? {} } };
     },
   },
@@ -328,13 +363,13 @@ export const executors: Record<string, NodeExecutor> = {
  * instead of failing obscurely.
  */
 export function zillizConfigFromEnv(
-  env: Pick<import('../types').Env, 'ZILLIZ_ENDPOINT' | 'ZILLIZ_API_KEY' | 'ZILLIZ_COLLECTION'>,
+  env: Pick<import('../types').Env, 'ZILLIZ_ENDPOINT' | 'ZILLIZ_URL' | 'ZILLIZ_API_KEY' | 'ZILLIZ_TOKEN' | 'ZILLIZ_COLLECTION'>,
 ): {
   zcfg: { endpoint: string; token: string };
   collection: string;
 } {
-  const endpoint = String(env.ZILLIZ_ENDPOINT || '').trim();
-  const apiKey = String(env.ZILLIZ_API_KEY || '').trim();
+  const endpoint = String(env.ZILLIZ_ENDPOINT || env.ZILLIZ_URL || '').trim();
+  const apiKey = String(env.ZILLIZ_API_KEY || env.ZILLIZ_TOKEN || '').trim();
   if (!endpoint || !apiKey) {
     throw new Error(
       'Zilliz is not configured. Set the Worker secrets ZILLIZ_ENDPOINT and ZILLIZ_API_KEY (then deploy or run `wrangler secret put`).',
