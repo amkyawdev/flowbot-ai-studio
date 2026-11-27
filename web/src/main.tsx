@@ -5,11 +5,13 @@ import App from './App';
 import './styles/global.css';
 
 // Reload once when a new service worker takes control (auto-update).
+// Guard against repeated reloads when several updates arrive together.
 if ('serviceWorker' in navigator) {
-  let refreshing = false;
+  const KEY = 'flowbot_sw_reload_at';
   navigator.serviceWorker.addEventListener('controllerchange', () => {
-    if (refreshing) return;
-    refreshing = true;
+    const last = Number(sessionStorage.getItem(KEY) || 0);
+    if (Date.now() - last < 10000) return;
+    sessionStorage.setItem(KEY, String(Date.now()));
     window.location.reload();
   });
 }

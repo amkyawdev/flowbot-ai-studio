@@ -4,7 +4,7 @@
 
 **Mobile-first AI automation, chat, and Telegram Bot builder** — a no-code node editor plus an AI chat workspace, powered by Cloudflare Workers, D1, KV, Queues, Workers AI, and Zilliz Cloud.
 
-![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.3-34d399)
+![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.4-34d399)
 
 > **Developer:** Aung Myo Kyaw · **Brand:** AmkyawDev · **Email:** aung.thuyrain.at449@gmail.com · **Location:** Nay Pyi Taw, Myanmar · **TikTok:** https://www.tiktok.com/@amkyaw.dev1
 
@@ -12,7 +12,7 @@
 
 ## Contents
 
-- [What's new in v1.2.3](#whats-new-in-v123)
+- [What's new in v1.2.4](#whats-new-in-v124)
 - [Features](#features)
 - [Screens and routes](#screens-and-routes)
 - [Architecture](#architecture)
@@ -36,8 +36,12 @@
 
 ---
 
-## What's new in v1.2.3
+## What's new in v1.2.4
 
+- **Password-only login** — the email-code UI was removed and OTP is disabled (`AUTH_OTP_MODE=off`). Network errors now say “Cannot reach the server…”, and preview hosts fall back to the production Worker API.
+- **New providers** — DeepSeek, MiniMax, ElevenLabs, Experiential Labs, and OpenRouter free models; Credentials shows each endpoint + auth header (Bearer / xi-api-key).
+- **AI Workflow Builder** — describe an automation on the Workflows page and AI generates a validated workflow JSON graph.
+- **Cloudflare Workers AI fix** — JSON-mode responses are stringified so they no longer cause D1 500 errors.
 - **Workflow editor fix** — correct node name/icon (Manual Trigger, Set, Delay, …), dark readable cards, and visible animated edges.
 - **PWA auto-update** — new deploys activate immediately instead of serving a stale cached bundle.
 - **Verified** — an end-to-end workflow run (Manual Trigger → Set → Delay → Set) completed successfully with per-node logs.
@@ -45,7 +49,7 @@
 - **Fixes** — Public Chat 500 (KV TTL) and bilingual README (English / မြန်မာ).
 - **AI Chat page** (`/chat`) with conversation history, search, rename, archive/delete, progressive text reveal, stop, regenerate, copy, system prompt, and provider/model selection.
 - **Public Chat** (`/public-chat`) for all signed-in users, with an active-user avatar strip (left-to-right marquee), presence heartbeat, and **automatic 24-hour message cleanup**.
-- **Email code authentication** — optional passwordless sign-in and registration verification with 6-digit email codes (Resend), hashed in D1 with 10-minute expiry and rate limits.
+- **Email code authentication (disabled by default)** — the code UI is removed and `AUTH_OTP_MODE=off`; password login is used.
 - **Animation Script System** — safe data-only presets (message entrance, typing, panel/sidebar transitions, presence marquee), preview/reset editor, and full `prefers-reduced-motion` support. No `eval`/`Function`.
 - **Modern loading screen** with logo ring, grid, orbs, and progress bar.
 - **Workflow builder upgrades** — run panel with input JSON, live logs and stop, import/export JSON, duplicate workflow, complete undo/redo, per-workflow autosave, searchable selectors, and validation.
@@ -236,16 +240,18 @@ Provider adapters live in `worker/src/integrations/providers.ts` and support:
 
 Credentials are created in **Credentials** with API key, optional Base URL, optional custom headers (stored encrypted), and an optional default model. Connection tests run server-side and never return secrets. Node configs can override the Base URL and choose a provider/model with searchable selectors.
 
-## Email code authentication
+## Email code authentication (disabled)
 
-FlowBot can verify registration and offer passwordless sign-in with a 6-digit email code.
+Email code sign-in is **currently disabled** (`AUTH_OTP_MODE=off`). The login page uses password-only authentication.
+
+To re-enable it later:
 
 1. Create a [Resend](https://resend.com) account and verify your sending domain.
-2. Set Worker secrets `RESEND_API_KEY` and `EMAIL_FROM` (for example `FlowBot <no-reply@yourdomain.com>`).
-3. Optionally set `AUTH_OTP_MODE`: `optional` (default — email-code sign-in is offered), `required` (a code is required after the password), or `off`.
-4. Deploy. The login page shows **Sign in with an email code**; registration sends a verification code.
+2. Set Worker secrets `RESEND_API_KEY` and `EMAIL_FROM`.
+3. Set `AUTH_OTP_MODE=required` and deploy.
+4. The login page will show **Sign in with an email code**; registration sends a verification code.
 
-Codes are stored only as SHA-256 hashes in D1, expire after 10 minutes, allow 5 attempts, and are rate-limited to one request per email per minute. For local testing only, set `OTP_DEV_ECHO=true` in `worker/.dev.vars` to display the code in the UI — never enable it in production.
+Codes are stored only as SHA-256 hashes in D1, expire after 10 minutes, allow 5 attempts, and are rate-limited. For local testing only, set `OTP_DEV_ECHO=true` in `worker/.dev.vars` — never in production.
 
 ## Cloudflare Workers AI
 
@@ -340,12 +346,12 @@ Optional signing secrets: `AMKYAW_KEYSTORE_BASE64`, `AMKYAW_KEYSTORE_PASSWORD`, 
 
 Pre-built artifacts publish to the **GitHub Releases** page.
 
-**Latest release — [v1.2.3](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.3):**
+**Latest release — [v1.2.4](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.4):**
 
 | Asset | Description | Link |
 |---|---|---|
-| `app-debug.apk` | Debug build (1.2.3) — installable on any Android device | [Download APK](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.3/app-debug.apk) |
-| `app-release.aab` | Release Android App Bundle (unsigned unless signing secrets are set) | [Download AAB](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.3/app-release.aab) |
+| `app-debug.apk` | Debug build (1.2.4) — installable on any Android device | [Download APK](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.4/app-debug.apk) |
+| `app-release.aab` | Release Android App Bundle (unsigned unless signing secrets are set) | [Download AAB](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.4/app-release.aab) |
 
 The debug APK is signed with Android's debug key, so it installs with *Unknown sources* enabled.
 

@@ -187,7 +187,7 @@ const SECTIONS: DocSection[] = [
           <li>Spam ကာကွယ်ရန် server-side rate limit ရှိသည်။</li>
         </ul>
         <p><b>AI Workflow Assistant</b> ကို <b>Workflows</b> page တွင် ထည့်ထားသည် — လိုချင်တဲ့ workflow ကို ဖော်ပြပြီး AI က JSON graph ရေးပေးနိုင်သည်။</p>
-        <div className="docs-callout">Email code sign-in ကို အသုံးပြုရန် <code>RESEND_API_KEY</code> နှင့် <code>EMAIL_FROM</code> ကို Worker secrets အဖြစ် သတ်မှတ်ပါ။</div>
+        <div className="docs-callout">Email code sign-in is currently <b>disabled</b> (<code>AUTH_OTP_MODE=off</code>). Use your password to sign in. To re-enable it, set <code>AUTH_OTP_MODE=required</code> plus <code>RESEND_API_KEY</code> and <code>EMAIL_FROM</code>.</div>
       </>
     ),
   },
@@ -216,7 +216,7 @@ const SECTIONS: DocSection[] = [
       <>
         <div className="docs-faq">
           <b>Login မရပါ</b>
-          <p>Password မှန်/မမှန် စစ်ပါ။ 10 ကြိမ်ကျော် မှားထားရင် 15 မိနစ် စောင့်ပါ။ Email OTP ဖွင့်ထားရင် “Sign in with an email code” ကို သုံးပါ။</p>
+          <p>Password မှန်/မမှန် စစ်ပါ။ 10 ကြိမ်ကျော် မှားထားရင် 15 မိနစ် စောင့်ပါ။ Email code sign-in ကို ပိတ်ထားပါသည် — password ဖြင့်သာ ဝင်ပါ။</p>
         </div>
         <div className="docs-faq">
           <b>Zilliz is not configured</b>

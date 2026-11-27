@@ -4,7 +4,7 @@
 
 **Mobile-first AI automation, chat နှင့် Telegram Bot builder** — Cloudflare Workers, D1, KV, Queues, Workers AI နှင့် Zilliz Cloud ဖြင့် မောင်းနှင်သော no-code node editor နှင့် AI chat workspace။
 
-![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.3-34d399)
+![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.4-34d399)
 
 > **Developer:** Aung Myo Kyaw · **Brand:** AmkyawDev · **Email:** aung.thuyrain.at449@gmail.com · **Location:** Nay Pyi Taw, Myanmar · **TikTok:** https://www.tiktok.com/@amkyaw.dev1
 
@@ -12,7 +12,7 @@
 
 ## မာတိကာ
 
-- [v1.2.3 တွင် အသစ်များ](#v121-တွင်-အသစ်များ)
+- [v1.2.4 တွင် အသစ်များ](#v121-တွင်-အသစ်များ)
 - [အင်္ဂါရပ်များ](#အင်္ဂါရပ်များ)
 - [စာမျက်နှာများနှင့် route များ](#စာမျက်နှာများနှင့်-route-များ)
 - [Architecture](#architecture)
@@ -36,16 +36,20 @@
 
 ---
 
-## v1.2.3 တွင် အသစ်များ
+## v1.2.4 တွင် အသစ်များ
 
-- **Workflow editor fix** — node name/icon မှန် (Manual Trigger, Set, Delay, …)၊ dark readable card နှင့် animated edge မြင်နိုင်။
+- **Password-only login** — email-code UI ကို ဖြုတ်ပြီး OTP ကို ပိတ်ထားသည် (`AUTH_OTP_MODE=off`)။ Network error များတွင် “Cannot reach the server…” ပြပြီး preview host များသည် production Worker API ကို သုံးသည်။
+- **Provider အသစ်များ** — DeepSeek, MiniMax, ElevenLabs, Experiential Labs နှင့် OpenRouter free models; Credentials တွင် endpoint + auth header (Bearer / xi-api-key) ပြသည်။
+- **AI Workflow Builder** — Workflows page တွင် prompt ဖြင့် AI က workflow JSON graph ဖန်တီးပေးသည်။
+- **Cloudflare Workers AI fix** — JSON response များကို stringify လုပ်ပြီး D1 500 error မဖြစ်တော့ပါ။
+- **Workflow editor fix** — node name/icon မှန်၊ dark readable card နှင့် animated edge မြင်နိုင်။
 - **PWA auto-update** — deploy အသစ်များ ချက်ချင်း အသက်ဝင်ပြီး အဟောင်း cache မပြ။
 - **Verified** — end-to-end workflow run (Manual Trigger → Set → Delay → Set) success ဖြစ်ပြီး node တစ်ခုချင်း log ထွက်။
 - **Register page download** — “Download App” button နှင့် APK URL တိုက်ရိုက်။
 - **Fixes** — Public Chat 500 (KV TTL) နှင့် README နှစ်ဘာသာ (English / မြန်မာ)။
 - **AI Chat page** (`/chat`) — conversation history, search, rename, archive/delete, progressive text reveal, stop, regenerate, copy, system prompt နှင့် provider/model ရွေးချယ်မှု။
 - **Public Chat** (`/public-chat`) — signed-in user အားလုံးအတွက်၊ active-user avatar strip (left-to-right marquee), presence heartbeat နှင့် **24 နာရီအလိုက် အလိုအလျောက် message ဖျက်ခြင်း**။
-- **Email code authentication** — 6-digit email code ဖြင့် passwordless sign-in နှင့် registration verification (Resend)၊ D1 တွင် hash သိမ်း၊ 10 မိနစ် expiry နှင့် rate limit။
+- **Email code authentication (disabled by default)** — code UI ကို ဖြုတ်ပြီး `AUTH_OTP_MODE=off` ဖြစ်သည်; password login ကို သုံးသည်။
 - **Animation Script System** — data-only safe presets (message entrance, typing, panel/sidebar transition, presence marquee), preview/reset editor နှင့် `prefers-reduced-motion` အပြည့်အဝပံ့ပိုးမှု။ `eval`/`Function` မသုံးပါ။
 - **Modern loading screen** — logo ring, grid, orbs နှင့် progress bar။
 - **Workflow builder တိုးတက်မှုများ** — input JSON ပါသော run panel, live logs နှင့် stop, import/export JSON, workflow duplicate, undo/redo အပြည့်အစုံ, per-workflow autosave, searchable selector နှင့် validation။
@@ -236,16 +240,18 @@ Provider adapter များသည် `worker/src/integrations/providers.ts` �
 
 Credential များကို **Credentials** တွင် API key, optional Base URL, optional custom headers (encrypt လုပ်သိမ်း) နှင့် optional default model ဖြင့် ဖန်တီးနိုင်သည်။ Connection test များကို server-side တွင် run ပြီး secret များကို ဘယ်တော့မှ မပြန်ပေးပါ။ Node config တွင် Base URL ကို override လုပ်နိုင်ပြီး searchable selector ဖြင့် provider/model ရွေးနိုင်သည်။
 
-## Email code authentication
+## Email code authentication (disabled)
 
-FlowBot သည် registration verification နှင့် passwordless sign-in အတွက် 6-digit email code ကို ပံ့ပိုးသည်။
+Email code sign-in ကို **လက်ရှိ ပိတ်ထားပါသည်** (`AUTH_OTP_MODE=off`)။ Login page သည် password-only ဖြစ်သည်။
+
+နောက်မှ ပြန်ဖွင့်လိုပါက:
 
 1. [Resend](https://resend.com) account ဖွင့်ပြီး sending domain ကို verify လုပ်ပါ။
-2. Worker secrets `RESEND_API_KEY` နှင့် `EMAIL_FROM` (ဥပမာ `FlowBot <no-reply@yourdomain.com>`) သတ်မှတ်ပါ။
-3. လိုအပ်ပါက `AUTH_OTP_MODE` ကို `optional` (default — email-code sign-in ပြသည်), `required` (password ပြီးနောက် code မဖြစ်မနေ), သို့မဟုတ် `off` သတ်မှတ်ပါ။
-4. Deploy လုပ်ပါ။ Login page တွင် **Sign in with an email code** ပေါ်လာပြီး registration တွင် verification code ပို့ပါမည်။
+2. Worker secrets `RESEND_API_KEY` နှင့် `EMAIL_FROM` သတ်မှတ်ပါ။
+3. `AUTH_OTP_MODE=required` သတ်မှတ်ပြီး deploy လုပ်ပါ။
+4. Login page တွင် **Sign in with an email code** ပေါ်လာမည်။
 
-Code များကို D1 တွင် SHA-256 hash အဖြစ်သာ သိမ်းပြီး 10 မိနစ်အကြာ သက်တမ်းကုန်ကာ 5 ကြိမ်သာ ကြိုးစားနိုင်သည်။ Email တစ်ခုလျှင် တစ်မိနစ်လျှင် request တစ်ကြိမ် rate-limit ရှိသည်။ Local test အတွက်သာ `OTP_DEV_ECHO=true` ကို `worker/.dev.vars` တွင် ထည့်ပြီး code ကို UI မှာ ပြနိုင်သည် — production တွင် ဘယ်တော့မှ မထည့်ပါနှင့်။
+Code များကို D1 တွင် SHA-256 hash အဖြစ်သာ သိမ်းပြီး 10 မိနစ် expiry၊ 5 attempts နှင့် rate limit ရှိသည်။ Local test အတွက်သာ `OTP_DEV_ECHO=true` ကို `worker/.dev.vars` တွင် ထည့်ပါ — production တွင် မထည့်ပါနှင့်။
 
 ## Cloudflare Workers AI
 
@@ -340,12 +346,12 @@ Optional signing secrets: `AMKYAW_KEYSTORE_BASE64`, `AMKYAW_KEYSTORE_PASSWORD`, 
 
 Build ပြီးသား artifact များကို **GitHub Releases** တွင် ထုတ်ပါသည်။
 
-**နောက်ဆုံး release — [v1.2.3](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.3):**
+**နောက်ဆုံး release — [v1.2.4](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.4):**
 
 | Asset | ဖော်ပြချက် | Link |
 |---|---|---|
-| `app-debug.apk` | Debug build (1.2.3) — Android device များတွင် install လုပ်နိုင် | [APK ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.3/app-debug.apk) |
-| `app-release.aab` | Release Android App Bundle (signing secret မရှိပါက unsigned) | [AAB ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.3/app-release.aab) |
+| `app-debug.apk` | Debug build (1.2.4) — Android device များတွင် install လုပ်နိုင် | [APK ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.4/app-debug.apk) |
+| `app-release.aab` | Release Android App Bundle (signing secret မရှိပါက unsigned) | [AAB ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.4/app-release.aab) |
 
 Debug APK သည် Android debug key ဖြင့် sign လုပ်ထားသောကြောင့် *Unknown sources* ဖွင့်ထားလျှင် install လုပ်နိုင်သည်။
 

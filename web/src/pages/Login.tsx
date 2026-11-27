@@ -5,7 +5,7 @@ import {
 import { useApp } from '@/store/app';
 
 const APP_DOWNLOAD_URL = (import.meta.env.VITE_APP_DOWNLOAD_URL as string | undefined)
-  || 'https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.3/app-debug.apk';
+  || 'https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.4/app-debug.apk';
 
 export function LoginPage() {
   const { login, register, toast } = useApp();
