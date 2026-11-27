@@ -48,7 +48,7 @@ export const PROVIDER_DEFAULTS: Record<string, { kind: 'openai' | 'gemini' | 'an
   'openai-compatible': { kind: 'openai', defaultModel: 'gpt-4o-mini', label: 'Custom OpenAI-compatible' },
   gemini: { kind: 'gemini', baseUrl: 'https://generativelanguage.googleapis.com/v1beta', defaultModel: 'gemini-2.0-flash', label: 'Google Gemini' },
   anthropic: { kind: 'anthropic', baseUrl: 'https://api.anthropic.com/v1', defaultModel: 'claude-3-5-haiku-latest', label: 'Anthropic' },
-  cloudflare: { kind: 'cloudflare', defaultModel: '@cf/meta/llama-3.1-8b-instruct', label: 'Cloudflare Workers AI' },
+  cloudflare: { kind: 'cloudflare', defaultModel: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', label: 'Cloudflare Workers AI' },
 };
 
 export function resolveProvider(provider: string): { kind: 'openai' | 'gemini' | 'anthropic' | 'cloudflare'; baseUrl?: string; defaultModel: string } {
@@ -159,7 +159,7 @@ async function anthropic(req: ChatRequest, defaultBase?: string): Promise<ChatRe
 
 async function cloudflare(req: ChatRequest): Promise<ChatResult> {
   if (!req.ai) throw new Error('Cloudflare Workers AI binding is not configured (add [ai] binding = "AI" in wrangler.toml)');
-  const model = req.model || '@cf/meta/llama-3.1-8b-instruct';
+  const model = req.model || '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
   const result = await req.ai.run(model, {
     messages: req.messages,
     temperature: req.temperature ?? 0.7,

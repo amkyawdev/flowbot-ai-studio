@@ -192,7 +192,7 @@ export const executors: Record<string, NodeExecutor> = {
       const result = await withTimeout(90_000, () => chatCompletion({
         provider: 'cloudflare',
         ai: ctx.env.AI,
-        model: String(cfg.model || '@cf/meta/llama-3.1-8b-instruct'),
+        model: String(cfg.model || '@cf/meta/llama-3.3-70b-instruct-fp8-fast'),
         messages,
         temperature: Number(cfg.temperature ?? 0.7),
         maxTokens: Number(cfg.maxTokens ?? 1024),

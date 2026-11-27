@@ -59,7 +59,7 @@ export function AiWorkflowBuilder({ open, onClose }: { open: boolean; onClose: (
       const firstCred = c.credentials.find((cr) => c.providers.some((p) => p.id === cr.provider));
       const p = c.cloudflareAvailable ? 'cloudflare' : (firstCred?.provider || 'openai');
       const meta = c.providers.find((x) => x.id === p);
-      const defaultModel = p === 'cloudflare' ? '@cf/meta/llama-3.3-70b-instruct' : (meta?.defaultModel || 'gpt-4o-mini');
+      const defaultModel = p === 'cloudflare' ? '@cf/meta/llama-3.3-70b-instruct-fp8-fast' : (meta?.defaultModel || 'gpt-4o-mini');
       setProvider(p);
       setModel(defaultModel);
       setCredentialId(p === 'cloudflare' ? '' : (firstCred?.id || ''));
@@ -76,7 +76,7 @@ export function AiWorkflowBuilder({ open, onClose }: { open: boolean; onClose: (
     const meta = config?.providers.find((p) => p.id === next);
     const cred = config?.credentials.find((c) => c.provider === next);
     setProvider(next);
-    setModel(next === 'cloudflare' ? '@cf/meta/llama-3.3-70b-instruct' : (meta?.defaultModel || model));
+    setModel(next === 'cloudflare' ? '@cf/meta/llama-3.3-70b-instruct-fp8-fast' : (meta?.defaultModel || model));
     setCredentialId(next === 'cloudflare' ? '' : (cred?.id || ''));
   }
 

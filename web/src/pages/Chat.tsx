@@ -22,7 +22,7 @@ const MODEL_SUGGESTIONS: Record<string, string[]> = {
   openrouter: ['openai/gpt-4o-mini', 'anthropic/claude-3.5-sonnet'],
   gemini: ['gemini-2.0-flash', 'gemini-1.5-pro'],
   anthropic: ['claude-3-5-sonnet-latest', 'claude-3-5-haiku-latest'],
-  cloudflare: ['@cf/meta/llama-3.1-8b-instruct', '@cf/meta/llama-3.3-70b-instruct', '@cf/mistral/mistral-7b-instruct'],
+  cloudflare: ['@cf/meta/llama-3.3-70b-instruct-fp8-fast', '@cf/meta/llama-4-scout-17b-16e-instruct', '@cf/mistralai/mistral-small-3.1-24b-instruct'],
 };
 
 const AVATAR_COLORS = ['#38bdf8', '#818cf8', '#22d3ee', '#34d399', '#fbbf24', '#f472b6', '#a78bfa'];

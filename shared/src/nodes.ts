@@ -162,17 +162,18 @@ export const NODE_REGISTRY: NodeDefinition[] = [
     inputs: [{ id: 'prompt', label: 'Prompt', type: 'string' }],
     outputs: [{ id: 'text', label: 'Text', type: 'string' }, { id: 'usage', label: 'Usage', type: 'object' }],
     config: [
-      { key: 'model', label: 'Model', type: 'select', default: '@cf/meta/llama-3.1-8b-instruct', options: [
-        { value: '@cf/meta/llama-3.1-8b-instruct', label: 'Llama 3.1 8B Instruct' },
-        { value: '@cf/meta/llama-3.3-70b-instruct', label: 'Llama 3.3 70B Instruct' },
-        { value: '@cf/mistral/mistral-7b-instruct', label: 'Mistral 7B Instruct' },
+      { key: 'model', label: 'Model', type: 'select', default: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', options: [
+        { value: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', label: 'Llama 3.3 70B Instruct (fast)' },
+        { value: '@cf/meta/llama-4-scout-17b-16e-instruct', label: 'Llama 4 Scout 17B' },
+        { value: '@cf/mistralai/mistral-small-3.1-24b-instruct', label: 'Mistral Small 3.1 24B' },
+        { value: '@cf/qwen/qwen2.5-coder-32b-instruct', label: 'Qwen 2.5 Coder 32B' },
       ]},
       { key: 'system', label: 'System prompt', type: 'textarea', rows: 3, default: '' },
       { key: 'prompt', label: 'Prompt', type: 'textarea', rows: 3, placeholder: 'User message ({{template}})', default: '' },
       { key: 'temperature', label: 'Temperature', type: 'number', default: 0.7 },
       { key: 'maxTokens', label: 'Max tokens', type: 'number', default: 1024 },
     ],
-    defaults: { model: '@cf/meta/llama-3.1-8b-instruct', system: '', prompt: '', temperature: 0.7, maxTokens: 1024 },
+    defaults: { model: '@cf/meta/llama-3.3-70b-instruct-fp8-fast', system: '', prompt: '', temperature: 0.7, maxTokens: 1024 },
     timeoutMs: 90000,
     retryable: true,
   },
