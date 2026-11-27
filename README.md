@@ -257,12 +257,12 @@ Optional signing secrets (all four required, else release stays unsigned):
 
 Pre-built artifacts publish to the **GitHub Releases** page.
 
-**Latest release — [v1.1.0](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.1.0):**
+**Latest release — [v1.1.1](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.1.1):**
 
 | Asset | Description | Link |
 |---|---|---|
-| `app-debug.apk` (≈4.2 MB) | Debug build (1.1.0) — installable on any Android device | [Download APK](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.1.0/app-debug.apk) |
-| `app-release.aab` (≈3.0 MB) | Release Android App Bundle (unsigned — for Play Store / signing by the owner) | [Download AAB](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.1.0/app-release.aab) |
+| `app-debug.apk` (≈4.2 MB) | Debug build (1.1.1) — installable on any Android device | [Download APK](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.1.1/app-debug.apk) |
+| `app-release.aab` (≈3.0 MB) | Release Android App Bundle (unsigned — for Play Store / signing by the owner) | [Download AAB](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.1.1/app-release.aab) |
 
 The `app-debug.apk` is signed with Android's debug key, so it installs cleanly on a phone with *Unknown sources* enabled. A signed `app-release.apk` will be attached to future releases once the `AMKYAW_KEYSTORE_*` signing secrets are configured.
 
