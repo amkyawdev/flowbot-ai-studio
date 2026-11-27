@@ -6,6 +6,12 @@ compatibility_flags = ["nodejs_compat"]
 [observability]
 enabled = true
 
+# Serve the built PWA from the same origin as the API (built by flowbot-web).
+[assets]
+directory = "../web/dist"
+binding = "ASSETS"
+not_found_handling = "single-page-application"
+
 # ---------------------------------------------------------------------------
 # Production bindings (provisioned 2026-11-27 via Cloudflare Global API Key).
 # Zilliz config (ZILLIZ_ENDPOINT, ZILLIZ_API_KEY) and vault/session secrets

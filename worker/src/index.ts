@@ -47,7 +47,13 @@ app.get('/api/in/webhook/:path', inboundWebhook);
 app.put('/api/in/webhook/:path', inboundWebhook);
 app.post('/api/in/telegram/:secret', telegramWebhookHandler);
 
-app.notFound((c) => c.json({ error: 'Not found' }, 404));
+// Unknown API routes → JSON 404. Everything else → serve the PWA (SPA).
+app.notFound((c) => {
+  const url = new URL(c.req.url);
+  if (url.pathname.startsWith('/api/')) return c.json({ error: 'Not found' }, 404);
+  if (c.env.ASSETS) return c.env.ASSETS.fetch(c.req.raw);
+  return c.json({ error: 'Not found' }, 404);
+});
 
 export default {
   fetch: app.fetch,

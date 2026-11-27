@@ -1,4 +1,6 @@
-export const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || 'http://localhost:8787';
+// Default to same-origin (app + API on the same host). For local dev set
+// VITE_API_BASE_URL (e.g. http://localhost:8787) in web/.env.local.
+export const API_BASE = (import.meta.env.VITE_API_BASE_URL as string) || '';
 
 export interface ApiError {
   status: number;

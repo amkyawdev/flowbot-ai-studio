@@ -4,6 +4,8 @@ export interface Env {
   DB: D1Database;
   KV: KVNamespace;
   R2: R2Bucket;
+  /** Built PWA served from the same Worker (web/dist). */
+  ASSETS: Fetcher;
   EXECUTION_QUEUE: Queue<QueueMessage>;
   CREDENTIAL_MASTER_KEY: string;
   AUTH_SESSION_SECRET: string;
