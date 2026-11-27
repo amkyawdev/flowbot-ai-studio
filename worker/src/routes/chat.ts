@@ -341,11 +341,13 @@ chatRoutes.post('/public/messages', async (c) => {
   if (!content) return jsonResponse({ error: 'Message is required' }, 400);
   if (content.length > 2000) return jsonResponse({ error: 'Message is too long (max 2000 characters)' }, 400);
 
-  const rateKey = `pub_rate:${app.user.id}`;
+  // KV requires expirationTtl >= 60s, so use a 2-second time bucket key instead.
+  const bucket = Math.floor(Date.now() / 2000);
+  const rateKey = `pub_rate:${app.user.id}:${bucket}`;
   if (await c.env.KV.get(rateKey)) {
     return jsonResponse({ error: 'Slow down — wait a moment before posting again.' }, 429);
   }
-  await c.env.KV.put(rateKey, '1', { expirationTtl: 2 });
+  await c.env.KV.put(rateKey, '1', { expirationTtl: 60 });
 
   const id = `pm_${randomId()}`;
   await maybePurge(c.env);
