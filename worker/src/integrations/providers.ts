@@ -215,8 +215,10 @@ async function cloudflare(req: ChatRequest): Promise<ChatResult> {
     messages: req.messages,
     temperature: req.temperature ?? 0.7,
     max_tokens: req.maxTokens ?? 1024,
-  }) as { response?: string; result?: { response?: string } } | null;
-  const text = result?.response ?? result?.result?.response ?? '';
+  }) as { response?: unknown; result?: { response?: unknown } } | null;
+  const raw = result?.response ?? result?.result?.response ?? '';
+  // Workers AI may return a parsed object when the model outputs JSON.
+  const text = typeof raw === 'string' ? raw : JSON.stringify(raw);
   return { text };
 }
 

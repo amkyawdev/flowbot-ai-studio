@@ -32,6 +32,12 @@ app.use('*', async (c, next) => {
 
 app.get('/api/health', (c) => c.json({ ok: true, service: 'flowbot-ai-studio', ts: new Date().toISOString() }));
 
+// Always return JSON for unhandled errors (the UI can show a clear message).
+app.onError((err, c) => {
+  console.error('unhandled error', err);
+  return c.json({ error: 'Internal Server Error' }, 500);
+});
+
 app.route('/api', authRoutes);
 app.route('/api', workflowRoutes);
 app.route('/api', executionRoutes);
