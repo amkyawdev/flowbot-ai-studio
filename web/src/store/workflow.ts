@@ -110,7 +110,7 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
         id: n.id,
         type: n.type,
         position: n.position,
-        data: { ...(getNodeDefinition(n.type)?.defaults ?? {}), ...(n.data ?? {}) },
+        data: { ...(getNodeDefinition(n.type)?.defaults ?? {}), ...(n.data ?? {}), nodeType: n.type },
       }));
       const edges = (wf.graph?.edges ?? []).map((e: any) => ({
         id: e.id,
@@ -159,7 +159,7 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
         id,
         type,
         position: position || { x: 0, y: 0 },
-        data: { ...(def?.defaults ?? {}) },
+        data: { ...(def?.defaults ?? {}), nodeType: type },
       };
       set((s) => ({ nodes: [...s.nodes, node], selectedNodeId: id, libraryOpen: false }));
     },
@@ -298,7 +298,11 @@ export const useWorkflow = create<WorkflowState>((set, get) => {
 
     replaceGraph({ name, nodes, edges }) {
       pushHistory(get().nodes, get().edges);
-      set({ nodes, edges, name: name ?? get().name, selectedNodeId: null });
+      const withTypes = nodes.map((n) => ({
+        ...n,
+        data: { ...(n.data ?? {}), nodeType: (n.data as any)?.nodeType ?? n.type },
+      }));
+      set({ nodes: withTypes, edges, name: name ?? get().name, selectedNodeId: null });
       void get().autosave();
     },
 

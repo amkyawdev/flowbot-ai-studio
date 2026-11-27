@@ -14,7 +14,7 @@ const icons: Record<string, any> = {
 };
 
 function NodeCardComponent({ type, data, selected }: NodeProps & { data: any }) {
-  const nodeType = type || (data?.nodeType as string) || 'set';
+  const nodeType = (data?.nodeType as string) || (type && type !== 'default' ? type : '') || 'set';
   const def = getNodeDefinition(nodeType);
   const Icon = icons[def?.icon ?? ''] ?? Bot;
   const color = def?.color ?? '#38bdf8';
