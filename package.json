@@ -1,6 +1,6 @@
 {
   "name": "flowbot-ai-studio",
-  "version": "1.2.2",
+  "version": "1.2.3",
   "private": true,
   "description": "FlowBot AI Studio — mobile-first AI automation and Telegram Bot builder",
   "workspaces": [

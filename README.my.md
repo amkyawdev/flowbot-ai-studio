@@ -4,7 +4,7 @@
 
 **Mobile-first AI automation, chat နှင့် Telegram Bot builder** — Cloudflare Workers, D1, KV, Queues, Workers AI နှင့် Zilliz Cloud ဖြင့် မောင်းနှင်သော no-code node editor နှင့် AI chat workspace။
 
-![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.2-34d399)
+![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.3-34d399)
 
 > **Developer:** Aung Myo Kyaw · **Brand:** AmkyawDev · **Email:** aung.thuyrain.at449@gmail.com · **Location:** Nay Pyi Taw, Myanmar · **TikTok:** https://www.tiktok.com/@amkyaw.dev1
 
@@ -12,7 +12,7 @@
 
 ## မာတိကာ
 
-- [v1.2.2 တွင် အသစ်များ](#v121-တွင်-အသစ်များ)
+- [v1.2.3 တွင် အသစ်များ](#v121-တွင်-အသစ်များ)
 - [အင်္ဂါရပ်များ](#အင်္ဂါရပ်များ)
 - [စာမျက်နှာများနှင့် route များ](#စာမျက်နှာများနှင့်-route-များ)
 - [Architecture](#architecture)
@@ -36,8 +36,11 @@
 
 ---
 
-## v1.2.2 တွင် အသစ်များ
+## v1.2.3 တွင် အသစ်များ
 
+- **Workflow editor fix** — node name/icon မှန် (Manual Trigger, Set, Delay, …)၊ dark readable card နှင့် animated edge မြင်နိုင်။
+- **PWA auto-update** — deploy အသစ်များ ချက်ချင်း အသက်ဝင်ပြီး အဟောင်း cache မပြ။
+- **Verified** — end-to-end workflow run (Manual Trigger → Set → Delay → Set) success ဖြစ်ပြီး node တစ်ခုချင်း log ထွက်။
 - **Register page download** — “Download App” button နှင့် APK URL တိုက်ရိုက်။
 - **Fixes** — Public Chat 500 (KV TTL) နှင့် README နှစ်ဘာသာ (English / မြန်မာ)။
 - **AI Chat page** (`/chat`) — conversation history, search, rename, archive/delete, progressive text reveal, stop, regenerate, copy, system prompt နှင့် provider/model ရွေးချယ်မှု။
@@ -333,12 +336,12 @@ Optional signing secrets: `AMKYAW_KEYSTORE_BASE64`, `AMKYAW_KEYSTORE_PASSWORD`, 
 
 Build ပြီးသား artifact များကို **GitHub Releases** တွင် ထုတ်ပါသည်။
 
-**နောက်ဆုံး release — [v1.2.2](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.2):**
+**နောက်ဆုံး release — [v1.2.3](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.3):**
 
 | Asset | ဖော်ပြချက် | Link |
 |---|---|---|
-| `app-debug.apk` | Debug build (1.2.2) — Android device များတွင် install လုပ်နိုင် | [APK ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.2/app-debug.apk) |
-| `app-release.aab` | Release Android App Bundle (signing secret မရှိပါက unsigned) | [AAB ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.2/app-release.aab) |
+| `app-debug.apk` | Debug build (1.2.3) — Android device များတွင် install လုပ်နိုင် | [APK ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.3/app-debug.apk) |
+| `app-release.aab` | Release Android App Bundle (signing secret မရှိပါက unsigned) | [AAB ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.3/app-release.aab) |
 
 Debug APK သည် Android debug key ဖြင့် sign လုပ်ထားသောကြောင့် *Unknown sources* ဖွင့်ထားလျှင် install လုပ်နိုင်သည်။
 
