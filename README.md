@@ -4,7 +4,7 @@
 
 **Mobile-first AI automation, chat, and Telegram Bot builder** — a no-code node editor plus an AI chat workspace, powered by Cloudflare Workers, D1, KV, Queues, Workers AI, and Zilliz Cloud.
 
-![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.4-34d399)
+![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.5-34d399)
 
 > **Developer:** Aung Myo Kyaw · **Brand:** AmkyawDev · **Email:** aung.thuyrain.at449@gmail.com · **Location:** Nay Pyi Taw, Myanmar · **TikTok:** https://www.tiktok.com/@amkyaw.dev1
 
@@ -12,7 +12,7 @@
 
 ## Contents
 
-- [What's new in v1.2.4](#whats-new-in-v124)
+- [What's new in v1.2.5](#whats-new-in-v125)
 - [Features](#features)
 - [Screens and routes](#screens-and-routes)
 - [Architecture](#architecture)
@@ -36,8 +36,10 @@
 
 ---
 
-## What's new in v1.2.4
+## What's new in v1.2.5
 
+- **Login reliability** — API calls retry the production Worker on preview/custom hosts; network failures show “Cannot reach the server…” and the login page has a **Clear cache & reload** link.
+- **No mid-session reloads** — PWA auto-update no longer reloads the page during login.
 - **Password-only login** — the email-code UI was removed and OTP is disabled (`AUTH_OTP_MODE=off`). Network errors now say “Cannot reach the server…”, and preview hosts fall back to the production Worker API.
 - **New providers** — DeepSeek, MiniMax, ElevenLabs, Experiential Labs, and OpenRouter free models; Credentials shows each endpoint + auth header (Bearer / xi-api-key).
 - **AI Workflow Builder** — describe an automation on the Workflows page and AI generates a validated workflow JSON graph.
@@ -346,12 +348,12 @@ Optional signing secrets: `AMKYAW_KEYSTORE_BASE64`, `AMKYAW_KEYSTORE_PASSWORD`, 
 
 Pre-built artifacts publish to the **GitHub Releases** page.
 
-**Latest release — [v1.2.4](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.4):**
+**Latest release — [v1.2.5](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.5):**
 
 | Asset | Description | Link |
 |---|---|---|
-| `app-debug.apk` | Debug build (1.2.4) — installable on any Android device | [Download APK](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.4/app-debug.apk) |
-| `app-release.aab` | Release Android App Bundle (unsigned unless signing secrets are set) | [Download AAB](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.4/app-release.aab) |
+| `app-debug.apk` | Debug build (1.2.5) — installable on any Android device | [Download APK](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.5/app-debug.apk) |
+| `app-release.aab` | Release Android App Bundle (unsigned unless signing secrets are set) | [Download AAB](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.5/app-release.aab) |
 
 The debug APK is signed with Android's debug key, so it installs with *Unknown sources* enabled.
 

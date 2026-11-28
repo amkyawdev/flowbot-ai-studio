@@ -5,7 +5,7 @@ import {
 import { useApp } from '@/store/app';
 
 const APP_DOWNLOAD_URL = (import.meta.env.VITE_APP_DOWNLOAD_URL as string | undefined)
-  || 'https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.4/app-debug.apk';
+  || 'https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.5/app-debug.apk';
 
 export function LoginPage() {
   const { login, register, toast } = useApp();
@@ -30,6 +30,21 @@ export function LoginPage() {
     } finally {
       setBusy(false);
     }
+  }
+
+  async function clearCacheAndReload() {
+    try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map((r) => r.unregister()));
+      }
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+      localStorage.removeItem('flowbot_token');
+    } catch { /* ignore */ }
+    window.location.reload();
   }
 
   return (
@@ -103,6 +118,14 @@ export function LoginPage() {
               <Smartphone size={14} /> Download the Android app
             </a>
           )}
+          <button
+            type="button"
+            className="auth-download-link"
+            style={{ background: 'none', border: 'none', width: '100%', cursor: 'pointer' }}
+            onClick={() => void clearCacheAndReload()}
+          >
+            Trouble signing in? Clear cache & reload
+          </button>
         </div>
       </div>
     </div>

@@ -41,5 +41,5 @@ settingRoutes.get('/settings/about', (c) => c.json({
   email: 'aung.thuyrain.at449@gmail.com',
   location: 'Nay Pyi Taw, Myanmar',
   tiktok: 'https://www.tiktok.com/@amkyaw.dev1',
-    version: '1.2.4',
+    version: '1.2.5',
 }));

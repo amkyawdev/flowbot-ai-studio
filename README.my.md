@@ -4,7 +4,7 @@
 
 **Mobile-first AI automation, chat နှင့် Telegram Bot builder** — Cloudflare Workers, D1, KV, Queues, Workers AI နှင့် Zilliz Cloud ဖြင့် မောင်းနှင်သော no-code node editor နှင့် AI chat workspace။
 
-![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.4-34d399)
+![theme](https://img.shields.io/badge/theme-nero%20%2B%20cyan-0a0a0d) ![PWA](https://img.shields.io/badge/PWA-installable-38bdf8) ![Android](https://img.shields.io/badge/Android-Capacitor-22d3ee) ![version](https://img.shields.io/badge/version-1.2.5-34d399)
 
 > **Developer:** Aung Myo Kyaw · **Brand:** AmkyawDev · **Email:** aung.thuyrain.at449@gmail.com · **Location:** Nay Pyi Taw, Myanmar · **TikTok:** https://www.tiktok.com/@amkyaw.dev1
 
@@ -12,7 +12,7 @@
 
 ## မာတိကာ
 
-- [v1.2.4 တွင် အသစ်များ](#v121-တွင်-အသစ်များ)
+- [v1.2.5 တွင် အသစ်များ](#v121-တွင်-အသစ်များ)
 - [အင်္ဂါရပ်များ](#အင်္ဂါရပ်များ)
 - [စာမျက်နှာများနှင့် route များ](#စာမျက်နှာများနှင့်-route-များ)
 - [Architecture](#architecture)
@@ -36,7 +36,10 @@
 
 ---
 
-## v1.2.4 တွင် အသစ်များ
+## v1.2.5 တွင် အသစ်များ
+
+- **Login ယုံကြည်စိတ်ချမှု** — preview/custom host များတွင် production Worker API သို့ retry လုပ်သည်; network error ကို “Cannot reach the server…”ြပြီး login page တွင် **Clear cache & reload** link ထည့်ထားသည်။
+- **Session အတွင်း reload မရှိ** — PWA auto-update က login လုပ်နေစဉ် reload မလုပ်တော့ပါ။
 
 - **Password-only login** — email-code UI ကို ဖြုတ်ပြီး OTP ကို ပိတ်ထားသည် (`AUTH_OTP_MODE=off`)။ Network error များတွင် “Cannot reach the server…” ပြပြီး preview host များသည် production Worker API ကို သုံးသည်။
 - **Provider အသစ်များ** — DeepSeek, MiniMax, ElevenLabs, Experiential Labs နှင့် OpenRouter free models; Credentials တွင် endpoint + auth header (Bearer / xi-api-key) ပြသည်။
@@ -346,12 +349,12 @@ Optional signing secrets: `AMKYAW_KEYSTORE_BASE64`, `AMKYAW_KEYSTORE_PASSWORD`, 
 
 Build ပြီးသား artifact များကို **GitHub Releases** တွင် ထုတ်ပါသည်။
 
-**နောက်ဆုံး release — [v1.2.4](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.4):**
+**နောက်ဆုံး release — [v1.2.5](https://github.com/amkyawdev/flowbot-ai-studio/releases/tag/v1.2.5):**
 
 | Asset | ဖော်ပြချက် | Link |
 |---|---|---|
-| `app-debug.apk` | Debug build (1.2.4) — Android device များတွင် install လုပ်နိုင် | [APK ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.4/app-debug.apk) |
-| `app-release.aab` | Release Android App Bundle (signing secret မရှိပါက unsigned) | [AAB ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.4/app-release.aab) |
+| `app-debug.apk` | Debug build (1.2.5) — Android device များတွင် install လုပ်နိုင် | [APK ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.5/app-debug.apk) |
+| `app-release.aab` | Release Android App Bundle (signing secret မရှိပါက unsigned) | [AAB ဒေါင်းလုဒ်](https://github.com/amkyawdev/flowbot-ai-studio/releases/download/v1.2.5/app-release.aab) |
 
 Debug APK သည် Android debug key ဖြင့် sign လုပ်ထားသောကြောင့် *Unknown sources* ဖွင့်ထားလျှင် install လုပ်နိုင်သည်။
 

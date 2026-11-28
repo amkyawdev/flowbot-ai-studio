@@ -35,22 +35,44 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
     const token = localStorage.getItem('flowbot_token');
     if (token) headers['Authorization'] = `Bearer ${token}`;
   }
+  const init: RequestInit = {
+    method: opts.method || 'GET',
+    headers,
+    body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
+    signal: opts.signal,
+  };
+  const doFetch = (base: string) => fetch(`${base}${path}`, init);
+
   let res: Response;
   try {
-    res = await fetch(`${API_BASE}${path}`, {
-      method: opts.method || 'GET',
-      headers,
-      body: opts.body !== undefined ? JSON.stringify(opts.body) : undefined,
-      signal: opts.signal,
-    });
+    res = await doFetch(API_BASE);
   } catch (e) {
     if (e instanceof DOMException && e.name === 'AbortError') throw e;
-    const where = API_BASE || (typeof window !== 'undefined' ? window.location.origin : 'the server');
-    throw new Error(`Cannot reach the server at ${where}. Check your connection and try again.`);
+    if (!API_BASE) {
+      try {
+        res = await doFetch(PROD_API_URL);
+      } catch (e2) {
+        if (e2 instanceof DOMException && e2.name === 'AbortError') throw e2;
+        throw new Error(`Cannot reach the server at ${PROD_API_URL}. Check your connection and try again.`);
+      }
+    } else {
+      throw new Error(`Cannot reach the server at ${API_BASE}. Check your connection and try again.`);
+    }
   }
+
   let data: unknown = null;
   let parsed = false;
   try { data = await res.json(); parsed = true; } catch { /* not JSON */ }
+
+  // A preview/custom host may serve the SPA for /api/*; retry the Worker API.
+  if (!parsed && !API_BASE) {
+    try {
+      res = await doFetch(PROD_API_URL);
+      data = await res.json();
+      parsed = true;
+    } catch { /* fall through to the error below */ }
+  }
+
   if (!res.ok) {
     const err = (data as ApiError) || {};
     const e = new Error(err.error || `Request failed (${res.status})`) as Error & { status?: number; issues?: unknown[] };
@@ -59,8 +81,6 @@ export async function api<T>(path: string, opts: { method?: string; body?: unkno
     throw e;
   }
   if (!parsed) {
-    // A 200 with a non-JSON body usually means the API host is wrong (the
-    // WebView served index.html instead of JSON). Surface a clear error.
     throw new Error('Unexpected response from server. Please check your connection.');
   }
   return data as T;
